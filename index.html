@@ -37,13 +37,14 @@ function card(p){const d=Number(p.discount_percent||0),actual=Number(p.actual_pr
     ? '80% + 10% OFF'
     : d + '% OFF'
 }</span>`:''}</div><div class="unit-label">Price per ${label}</div><div class="stock ${stock?'':'out'}">${stockLabel(p)}</div>${p.video_url?`<a class="video-link" href="${esc(p.video_url)}" target="_blank" rel="noopener">▶ Watch product video</a>`:''}<div class="qty-row"><button class="qty-btn" data-minus="${p.id}" aria-label="Remove one ${esc(p.name)}" ${n<=0?'disabled':''}>−</button><input class="qty-input" data-qty="${p.id}" aria-label="Quantity for ${esc(p.name)}" type="number" min="0" max="${stock}" step="1" value="${n}" ${stock<=0?'disabled':''}><button class="qty-btn" data-plus="${p.id}" aria-label="Add one ${esc(p.name)}" ${n>=stock?'disabled':''}>+</button></div><div class="line-total">Item total: ${money(sale*n)}</div></div></article>`}
-function renderTypeFilters(){
-  function makeButtons(section,selected){
+
+function renderTypeFilters() {
+  function makeButtons(section, selectedType) {
     return [
-      `<button class="filter ${selected==='all'?'active':''}"
+      `<button class="filter ${selectedType === 'all' ? 'active' : ''}"
         data-type-filter="${section}" data-type="all">All types</button>`,
-      ...productTypes.map(type=>`
-        <button class="filter ${selected===type?'active':''}"
+      ...productTypes.map(type => `
+        <button class="filter ${selectedType === type ? 'active' : ''}"
           data-type-filter="${section}" data-type="${esc(type)}">
           ${esc(type)}
         </button>
@@ -51,52 +52,70 @@ function renderTypeFilters(){
     ].join('');
   }
 
-  $('standardTypeFilters').innerHTML=
-    makeButtons('standard',standardTypeFilter);
+  $('standardTypeFilters').innerHTML =
+    makeButtons('standard', standardTypeFilter);
 
-  $('nonStandardTypeFilters').innerHTML=
-    makeButtons('non_standard',nonStandardTypeFilter);
+  $('nonStandardTypeFilters').innerHTML =
+    makeButtons('non_standard', nonStandardTypeFilter);
 }
 
-function render(){
-  const q=$('search').value.trim().toLowerCase();
+function render() {
+  const q = $('search').value.trim().toLowerCase();
 
-  const list=products.filter(p=>
-    (filter==='all'||p.category===filter) &&
-    (`${p.name} ${p.description||''}`).toLowerCase().includes(q)
+  // Apply the main category filter and search
+  const list = products.filter(p =>
+    (filter === 'all' || p.category === filter) &&
+    (`${p.name} ${p.description || ''}`).toLowerCase().includes(q)
   );
 
-  const std=list.filter(p=>
-    p.category==='standard' &&
-    (standardTypeFilter==='all'||
-     (p.product_type||'Other')===standardTypeFilter)
+  // Apply the separate product-type filters
+  const std = list.filter(p =>
+    p.category === 'standard' &&
+    (standardTypeFilter === 'all' ||
+      (p.product_type || 'Other') === standardTypeFilter)
   );
 
-  const non=list.filter(p=>
-    p.category==='non_standard' &&
-    (nonStandardTypeFilter==='all'||
-     (p.product_type||'Other')===nonStandardTypeFilter)
+  const non = list.filter(p =>
+    p.category === 'non_standard' &&
+    (nonStandardTypeFilter === 'all' ||
+      (p.product_type || 'Other') === nonStandardTypeFilter)
   );
 
-  $('standardGrid').innerHTML=std.length
-    ?std.map(card).join('')
-    :'<div class="empty">No standard products match these filters.</div>';
+  // Render standard products
+  $('standardGrid').innerHTML = std.length
+    ? std.map(card).join('')
+    : '<div class="empty">No standard products match these filters.</div>';
 
-  $('nonStandardGrid').innerHTML=non.length
-    ?non.map(card).join('')
-    :'<div class="empty">No non-standard products match these filters.</div>';
+  // Render non-standard products
+  $('nonStandardGrid').innerHTML = non.length
+    ? non.map(card).join('')
+    : '<div class="empty">No non-standard products match these filters.</div>';
 
-  $('standardSection').classList.toggle('hidden',filter==='non_standard');
-  $('nonStandardSection').classList.toggle('hidden',filter==='standard');
+  // Show or hide sections according to the main category filter
+  $('standardSection').classList.toggle(
+    'hidden',
+    filter === 'non_standard'
+  );
 
-  $('standardCount').textContent=std.length
-    ?`${std.length} item${std.length===1?'':'s'}`:'';
+  $('nonStandardSection').classList.toggle(
+    'hidden',
+    filter === 'standard'
+  );
 
-  $('nonStandardCount').textContent=non.length
-    ?`${non.length} item${non.length===1?'':'s'}`:'';
+  // Update product counts
+  $('standardCount').textContent = std.length
+    ? `${std.length} item${std.length === 1 ? '' : 's'}`
+    : '';
 
+  $('nonStandardCount').textContent = non.length
+    ? `${non.length} item${non.length === 1 ? '' : 's'}`
+    : '';
+
+  // Keep the cart totals and selected quantities updated
   updateCartSummary();
 }
+
+renderTypeFilters();
 
 
 function selected(){return products.filter(p=>qty(p)>0)}function cartTotal(){return selected().reduce((s,p)=>s+lineTotal(p),0)}function updateCartSummary(){const count=selected().reduce((s,p)=>s+qty(p),0),total=cartTotal();$('navCartCount').textContent=count;$('barTotal').textContent=money(total);$('barDetails').textContent=`${count} selling unit${count===1?'':'s'} across ${selected().length} product${selected().length===1?'':'s'}`;$('cartBar').classList.toggle('hidden',count===0);$('modalTotal').textContent=money(total)}function setQty(id,value){const p=products.find(x=>x.id===id);if(!p)return;let n=Number(value);if(!Number.isFinite(n))n=0;n=Math.max(0,Math.min(Number(p.stock_quantity||0),Math.floor(n)));if(n===0)delete cart[id];else cart[id]=n;render();if($('cartModal').classList.contains('open'))renderCart()}
