@@ -3,8 +3,8 @@
 // Set the shop WhatsApp number using country code + number, digits only (India: 91XXXXXXXXXX).
 // Never put a service_role/secret key in browser code.
 window.SIVAKAR_CONFIG = {
-  SUPABASE_URL: 'PASTE_NEW_SUPABASE_PROJECT_URL_HERE',
-  SUPABASE_ANON_KEY: 'PASTE_NEW_SUPABASE_ANON_KEY_HERE',
-  SHOP_WHATSAPP_NUMBER: 'PASTE_SHOP_WHATSAPP_NUMBER_HERE',
+  SUPABASE_URL: 'https://yagpqskjqwrralkefqqn.supabase.co',
+  SUPABASE_ANON_KEY: 'sb_publishable_0jP4QO6MxmLIyr51Cqu8Wg_Ct4X7w8n',
+  SHOP_WHATSAPP_NUMBER: '918885909297',
   SHOP_NAME: 'Sivakar'
 };
