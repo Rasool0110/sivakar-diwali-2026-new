@@ -4,28 +4,141 @@
 </style></head><body>
 <div class="topline">SIVAKAR · DIWALI 2026 · CELEBRATE BRIGHTER</div><header class="nav"><div class="brand">SIVA<span>KAR</span></div><button class="cart-open" id="openCart">Review order · <span id="navCartCount">0</span></button></header>
 <section class="hero"><div class="eyebrow">A season of light</div><h1>Make this Diwali<br>shine brighter.</h1><p>Explore our crackers collection, choose your quantities, and send your order directly to Sivakar on WhatsApp.</p></section>
-<main class="main"><div id="status" class="status">Connect the new Supabase project to load the live product catalogue.</div><div class="toolbar"><input id="search" class="search" type="search" placeholder="Search crackers by name…" aria-label="Search products"><div class="filters"><button class="filter active" data-filter="all">All items</button><button class="filter" data-filter="standard">Standard</button><button class="filter" data-filter="non_standard">Non-standard</button></div></div><section id="standardSection"><div class="section-head"><div><h2>Standard crackers</h2><p>Our standard collection</p></div><span id="standardCount"></span></div><div id="standardGrid" class="grid"></div></section><section id="nonStandardSection"><div class="section-head"><div><h2>Non-standard crackers</h2><p>Explore more festive favourites</p></div><span id="nonStandardCount"></span></div><div id="nonStandardGrid" class="grid"></div></section></main>
+<main class="main"><div id="status" class="status">Connect the new Supabase project to load the live product catalogue.</div><div class="toolbar"><input id="search" class="search" type="search" placeholder="Search crackers by name…" aria-label="Search products"><div class="filters"><button class="filter active" data-filter="all">All items</button><button class="filter" data-filter="standard">Standard</button><button class="filter" data-filter="non_standard">Non-standard</button></div></div><section id="standardSection"><div class="section-head"><div><h2>Standard crackers</h2><p>Our standard collection</p></div><span id="standardCount"></span></div><div id="standardTypeFilters" class="filters" style="margin-bottom:14px"></div><div id="standardGrid" class="grid"></div></section><section id="nonStandardSection"><div class="section-head"><div><h2>Non-standard crackers</h2><p>Explore more festive favourites</p></div><span id="nonStandardCount"></span></div><div id="nonStandardTypeFilters" class="filters" style="margin-bottom:14px"></div><div id="nonStandardGrid" class="grid"></div></section></main>
 <div id="cartBar" class="cartbar hidden"><div><strong id="barTotal">₹0</strong><small id="barDetails">0 items selected</small></div><button class="btn primary" id="barReview">Review order →</button></div>
 <div class="modal-backdrop" id="cartModal" role="dialog" aria-modal="true" aria-labelledby="cartTitle"><div class="modal"><div class="modal-head"><h2 id="cartTitle">Review your order</h2><button class="close" id="closeCart" aria-label="Close">×</button></div><div id="cartItems" class="cart-list"></div><div class="grand"><span>Order total</span><span id="modalTotal">₹0</span></div><form id="customerForm"><h3>Customer details</h3><div class="form-grid"><div class="field"><label for="customerName">Full name *</label><input id="customerName" required maxlength="120" autocomplete="name" placeholder="Your name"></div><div class="field"><label for="customerMobile">Mobile number *</label><input id="customerMobile" required type="tel" inputmode="tel" maxlength="20" autocomplete="tel" placeholder="10-digit mobile number"></div><div class="field full"><label for="customerAddress">Delivery address *</label><textarea id="customerAddress" required maxlength="700" autocomplete="street-address" placeholder="House / flat, street, area, city, PIN code"></textarea></div></div><p class="note">When you click Place Order, WhatsApp opens with your order details. Please press Send in WhatsApp to submit your order. Your order is not confirmed until Sivakar replies.</p><div id="checkoutError" class="status hidden"></div><div class="modal-actions"><button class="btn secondary" type="button" id="continueShopping">Continue shopping</button><button class="btn primary" type="submit" id="placeOrder">Place order on WhatsApp ↗</button></div></form></div></div>
 <footer class="footer">Thank you for celebrating with <strong>Sivakar</strong> · <a href="admin.html">Shop admin</a><p>Please follow all local fireworks safety guidance and use products responsibly.</p></footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script>
-const cfg=window.SIVAKAR_CONFIG||{};let db=null,products=[],filter='all',cart={};const $=id=>document.getElementById(id);const money=n=>'₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2});function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function configured(){return cfg.SUPABASE_URL&&cfg.SUPABASE_ANON_KEY&&!cfg.SUPABASE_URL.includes('PASTE_')&&!cfg.SUPABASE_ANON_KEY.includes('PASTE_')}function setStatus(msg,hide=false){$('status').textContent=msg;$('status').classList.toggle('hidden',hide)}function salePrice(p){return Math.round(Number(p.actual_price||0)*(1-Number(p.discount_percent||0)/100)*100)/100}function unitName(p){return ({box:'box',piece:'piece',packet:'packet',bag:'bag'})[p.selling_unit]||'unit'}function internalUnits(p){return Number(p.stock_quantity||0)*(p.selling_unit==='box'?Number(p.pieces_per_box||1):1)}function qty(p){return Number(cart[p.id]||0)}function lineTotal(p){return salePrice(p)*qty(p)}function stockLabel(p){return Number(p.stock_quantity)>0?`${p.stock_quantity} ${unitName(p)}(s) available`:'Currently out of stock'}
+const cfg=window.SIVAKAR_CONFIG||{};
+let db=null,products=[],filter='all',cart={};
+let standardTypeFilter='all',nonStandardTypeFilter='all';
+
+const productTypes=[
+  'Sparklers',
+  'Bijili Crackers',
+  'Bombs',
+  'Ground Chakkars',
+  'Flower Pots',
+  'Fountains',
+  'Rockets',
+  'Aerial Shots',
+  'Walas / Garland Crackers',
+  'Fancy Wheels & Spinners',
+  'Fancy & Novelty Crackers',
+  'Pencil & Twinkling Crackers',
+  'Comets',
+  'Smoke & Fog Items',
+  'Gift Boxes',
+  'Other'
+];const $=id=>document.getElementById(id);const money=n=>'₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2});function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function configured(){return cfg.SUPABASE_URL&&cfg.SUPABASE_ANON_KEY&&!cfg.SUPABASE_URL.includes('PASTE_')&&!cfg.SUPABASE_ANON_KEY.includes('PASTE_')}function setStatus(msg,hide=false){$('status').textContent=msg;$('status').classList.toggle('hidden',hide)}function salePrice(p){return Math.round(Number(p.actual_price||0)*(1-Number(p.discount_percent||0)/100)*100)/100}function unitName(p){return ({box:'box',piece:'piece',packet:'packet',bag:'bag'})[p.selling_unit]||'unit'}function internalUnits(p){return Number(p.stock_quantity||0)*(p.selling_unit==='box'?Number(p.pieces_per_box||1):1)}function qty(p){return Number(cart[p.id]||0)}function lineTotal(p){return salePrice(p)*qty(p)}function stockLabel(p){return Number(p.stock_quantity)>0?`${p.stock_quantity} ${unitName(p)}(s) available`:'Currently out of stock'}
 function card(p){const d=Number(p.discount_percent||0),actual=Number(p.actual_price||0),sale=salePrice(p),n=qty(p),stock=Number(p.stock_quantity||0),label=unitName(p);const media=p.image_url?`<img loading="lazy" src="${esc(p.image_url)}" alt="${esc(p.name)}">`:'<div class="fallback">✦</div>';return `<article class="product"><div class="media">${media}<span class="tag">${p.category==='standard'?'Standard':'Non-standard'}</span></div><div class="product-body"><h3>${esc(p.name)}</h3><div class="desc">${esc(p.description||'Diwali crackers')}</div><div class="prices"><span class="sale">${money(sale)}</span>${d>0?`<span class="actual">${money(actual)}</span>
 <span class="discount">${
   String(p.category || '').trim().toLowerCase() === 'standard'
     ? '80% + 10% OFF'
     : d + '% OFF'
 }</span>`:''}</div><div class="unit-label">Price per ${label}</div><div class="stock ${stock?'':'out'}">${stockLabel(p)}</div>${p.video_url?`<a class="video-link" href="${esc(p.video_url)}" target="_blank" rel="noopener">▶ Watch product video</a>`:''}<div class="qty-row"><button class="qty-btn" data-minus="${p.id}" aria-label="Remove one ${esc(p.name)}" ${n<=0?'disabled':''}>−</button><input class="qty-input" data-qty="${p.id}" aria-label="Quantity for ${esc(p.name)}" type="number" min="0" max="${stock}" step="1" value="${n}" ${stock<=0?'disabled':''}><button class="qty-btn" data-plus="${p.id}" aria-label="Add one ${esc(p.name)}" ${n>=stock?'disabled':''}>+</button></div><div class="line-total">Item total: ${money(sale*n)}</div></div></article>`}
-function render(){const q=$('search').value.trim().toLowerCase();const list=products.filter(p=>(filter==='all'||p.category===filter)&&(`${p.name} ${p.description||''}`).toLowerCase().includes(q));const std=list.filter(p=>p.category==='standard'),non=list.filter(p=>p.category==='non_standard');$('standardGrid').innerHTML=std.length?std.map(card).join(''):'<div class="empty">No standard products match your search.</div>';$('nonStandardGrid').innerHTML=non.length?non.map(card).join(''):'<div class="empty">No non-standard products match your search.</div>';$('standardSection').classList.toggle('hidden',filter==='non_standard');$('nonStandardSection').classList.toggle('hidden',filter==='standard');$('standardCount').textContent=std.length?`${std.length} item${std.length===1?'':'s'}`:'';$('nonStandardCount').textContent=non.length?`${non.length} item${non.length===1?'':'s'}`:'';updateCartSummary()}
+function renderTypeFilters(){
+  function makeButtons(section,selected){
+    return [
+      `<button class="filter ${selected==='all'?'active':''}"
+        data-type-filter="${section}" data-type="all">All types</button>`,
+      ...productTypes.map(type=>`
+        <button class="filter ${selected===type?'active':''}"
+          data-type-filter="${section}" data-type="${esc(type)}">
+          ${esc(type)}
+        </button>
+      `)
+    ].join('');
+  }
+
+  $('standardTypeFilters').innerHTML=
+    makeButtons('standard',standardTypeFilter);
+
+  $('nonStandardTypeFilters').innerHTML=
+    makeButtons('non_standard',nonStandardTypeFilter);
+}
+
+function render(){
+  const q=$('search').value.trim().toLowerCase();
+
+  const list=products.filter(p=>
+    (filter==='all'||p.category===filter) &&
+    (`${p.name} ${p.description||''}`).toLowerCase().includes(q)
+  );
+
+  const std=list.filter(p=>
+    p.category==='standard' &&
+    (standardTypeFilter==='all'||
+     (p.product_type||'Other')===standardTypeFilter)
+  );
+
+  const non=list.filter(p=>
+    p.category==='non_standard' &&
+    (nonStandardTypeFilter==='all'||
+     (p.product_type||'Other')===nonStandardTypeFilter)
+  );
+
+  $('standardGrid').innerHTML=std.length
+    ?std.map(card).join('')
+    :'<div class="empty">No standard products match these filters.</div>';
+
+  $('nonStandardGrid').innerHTML=non.length
+    ?non.map(card).join('')
+    :'<div class="empty">No non-standard products match these filters.</div>';
+
+  $('standardSection').classList.toggle('hidden',filter==='non_standard');
+  $('nonStandardSection').classList.toggle('hidden',filter==='standard');
+
+  $('standardCount').textContent=std.length
+    ?`${std.length} item${std.length===1?'':'s'}`:'';
+
+  $('nonStandardCount').textContent=non.length
+    ?`${non.length} item${non.length===1?'':'s'}`:'';
+
+  updateCartSummary();
+}
+
+renderTypeFilters();$('standardGrid').innerHTML=std.length?std.map(card).join(''):'<div class="empty">No standard products match your search.</div>';$('nonStandardGrid').innerHTML=non.length?non.map(card).join(''):'<div class="empty">No non-standard products match your search.</div>';$('standardSection').classList.toggle('hidden',filter==='non_standard');$('nonStandardSection').classList.toggle('hidden',filter==='standard');$('standardCount').textContent=std.length?`${std.length} item${std.length===1?'':'s'}`:'';$('nonStandardCount').textContent=non.length?`${non.length} item${non.length===1?'':'s'}`:'';updateCartSummary()}
 function selected(){return products.filter(p=>qty(p)>0)}function cartTotal(){return selected().reduce((s,p)=>s+lineTotal(p),0)}function updateCartSummary(){const count=selected().reduce((s,p)=>s+qty(p),0),total=cartTotal();$('navCartCount').textContent=count;$('barTotal').textContent=money(total);$('barDetails').textContent=`${count} selling unit${count===1?'':'s'} across ${selected().length} product${selected().length===1?'':'s'}`;$('cartBar').classList.toggle('hidden',count===0);$('modalTotal').textContent=money(total)}function setQty(id,value){const p=products.find(x=>x.id===id);if(!p)return;let n=Number(value);if(!Number.isFinite(n))n=0;n=Math.max(0,Math.min(Number(p.stock_quantity||0),Math.floor(n)));if(n===0)delete cart[id];else cart[id]=n;render();if($('cartModal').classList.contains('open'))renderCart()}
 function renderCart(){const list=selected();$('cartItems').innerHTML=list.length?list.map(p=>`<div class="cart-line"><div><strong>${esc(p.name)}</strong><small>${qty(p)} × ${money(salePrice(p))} per ${unitName(p)}</small><button class="remove" type="button" data-remove="${p.id}">Remove</button></div><strong>${money(lineTotal(p))}</strong></div>`).join(''):'<div class="empty">Your cart is empty. Close this panel and choose products first.</div>';$('modalTotal').textContent=money(cartTotal());$('placeOrder').disabled=!list.length}
 function openCart(){renderCart();$('checkoutError').classList.add('hidden');$('cartModal').classList.add('open');document.body.style.overflow='hidden'}function closeCart(){ $('cartModal').classList.remove('open');document.body.style.overflow=''}
-document.querySelectorAll('.filter').forEach(b=>b.addEventListener('click',()=>{filter=b.dataset.filter;document.querySelectorAll('.filter').forEach(x=>x.classList.toggle('active',x===b));render()}));$('search').addEventListener('input',render);document.body.addEventListener('click',e=>{const plus=e.target.closest('[data-plus]')?.dataset.plus,minus=e.target.closest('[data-minus]')?.dataset.minus;if(plus)setQty(plus,qty(products.find(p=>p.id===plus))+1);if(minus)setQty(minus,qty(products.find(p=>p.id===minus))-1);const remove=e.target.closest('[data-remove]')?.dataset.remove;if(remove){setQty(remove,0);renderCart()}});document.body.addEventListener('change',e=>{const id=e.target.dataset.qty;if(id)setQty(id,e.target.value)});document.body.addEventListener('input',e=>{const id=e.target.dataset.qty;if(id&&e.target.value!=='' ){const n=Number(e.target.value);if(Number.isFinite(n)&&n>=0&&n<=Number(products.find(p=>p.id===id)?.stock_quantity||0)){cart[id]=Math.floor(n);if(cart[id]===0)delete cart[id];updateCartSummary();const p=products.find(x=>x.id===id);const cardEl=e.target.closest('.product');if(cardEl){const total=cardEl.querySelector('.line-total');if(total)total.textContent='Item total: '+money(lineTotal(p));}}}});
+document.querySelectorAll('.filters').forEach(group=>{
+  group.addEventListener('click',e=>{
+    const b=e.target.closest('[data-filter]');
+    if(!b)return;
+
+    filter=b.dataset.filter;
+
+    document.querySelectorAll('[data-filter]').forEach(x=>
+      x.classList.toggle('active',x===b)
+    );
+
+    render();
+  });
+});
+
+document.body.addEventListener('click',e=>{
+  const b=e.target.closest('[data-type-filter]');
+  if(!b)return;
+
+  if(b.dataset.typeFilter==='standard'){
+    standardTypeFilter=b.dataset.type;
+  }else{
+    nonStandardTypeFilter=b.dataset.type;
+  }
+
+  renderTypeFilters();
+  render();
+});$('search').addEventListener('input',render);document.body.addEventListener('click',e=>{const plus=e.target.closest('[data-plus]')?.dataset.plus,minus=e.target.closest('[data-minus]')?.dataset.minus;if(plus)setQty(plus,qty(products.find(p=>p.id===plus))+1);if(minus)setQty(minus,qty(products.find(p=>p.id===minus))-1);const remove=e.target.closest('[data-remove]')?.dataset.remove;if(remove){setQty(remove,0);renderCart()}});document.body.addEventListener('change',e=>{const id=e.target.dataset.qty;if(id)setQty(id,e.target.value)});document.body.addEventListener('input',e=>{const id=e.target.dataset.qty;if(id&&e.target.value!=='' ){const n=Number(e.target.value);if(Number.isFinite(n)&&n>=0&&n<=Number(products.find(p=>p.id===id)?.stock_quantity||0)){cart[id]=Math.floor(n);if(cart[id]===0)delete cart[id];updateCartSummary();const p=products.find(x=>x.id===id);const cardEl=e.target.closest('.product');if(cardEl){const total=cardEl.querySelector('.line-total');if(total)total.textContent='Item total: '+money(lineTotal(p));}}}});
 $('openCart').addEventListener('click',openCart);$('barReview').addEventListener('click',openCart);$('closeCart').addEventListener('click',closeCart);$('continueShopping').addEventListener('click',closeCart);$('cartModal').addEventListener('click',e=>{if(e.target===$('cartModal'))closeCart()});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeCart()});
 $('customerForm').addEventListener('submit',async e=>{e.preventDefault();const err=$('checkoutError'),btn=$('placeOrder');err.classList.add('hidden');const items=selected();if(!items.length){err.textContent='Please add at least one product before placing the order.';err.classList.remove('hidden');return}const rawNumber=String(cfg.SHOP_WHATSAPP_NUMBER||'').replace(/\D/g,'');if(!rawNumber||rawNumber.includes('PASTE')){err.textContent='Shop WhatsApp number is not configured yet. Update supabase-config.js.';err.classList.remove('hidden');return}const name=$('customerName').value.trim(),mobile=$('customerMobile').value.trim(),address=$('customerAddress').value.trim();if(!name||!mobile||!address){err.textContent='Please complete your name, mobile number and delivery address.';err.classList.remove('hidden');return}if(!db){err.textContent='The catalogue database is not connected. Please refresh and try again.';err.classList.remove('hidden');return}btn.disabled=true;btn.textContent='Checking stock and placing order…';try{const payload=items.map(p=>({product_id:p.id,quantity:qty(p)}));const {data,error}=await db.rpc('create_sivakar_order',{p_customer_name:name,p_customer_mobile:mobile,p_delivery_address:address,p_items:payload});if(error)throw error;const order=data;const lines=(order.items||[]).map((it,i)=>`${i+1}. ${it.name}\n   ${it.quantity} ${it.selling_unit}(s) × ${money(it.unit_price)} = ${money(it.line_total)}${Number(it.discount_percent)>0?` (${it.discount_percent}% off)`:''}`).join('\n');const textMessage=`${cfg.SHOP_NAME||'Sivakar'} — NEW ORDER REQUEST\nReference: ${order.reference}\nCUSTOMER DETAILS\nName: ${name}\nMobile: ${mobile}\nDelivery address: ${address}\n\nORDER ITEMS\n${lines}\n\nTOTAL: ${money(order.total)}\n\nThank you for ordering with Raghuveera Crackers! ❤️
 
 We’ll contact you shortly to confirm your order.
 
 🪔 Happy & Safe Diwali! 🎇`;cart={};closeCart();await load();window.location.href=`https://wa.me/${rawNumber}?text=${encodeURIComponent(textMessage)}`;}catch(ex){err.textContent=(ex.message||'Could not place order. Please refresh the catalogue and try again.')+' No order was placed if this error came from stock validation.';err.classList.remove('hidden');await load()}finally{btn.disabled=false;btn.textContent='Place order on WhatsApp ↗'}});
-async function load(){if(!configured()){setStatus('Setup required: add your NEW Supabase project URL and anon key in supabase-config.js, then reload this page.');return}db=supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY);const {data,error}=await db.from('products').select('id,name,description,category,selling_unit,stock_quantity,pieces_per_box,actual_price,discount_percent,image_url,video_url,is_published,display_order').eq('is_published',true).order('display_order').order('name');if(error){setStatus('Could not load products. Check that the new database schema is installed. Details: '+error.message);return}products=data||[];setStatus(products.length?'Catalogue updated. Select quantities and review your order before sending it through WhatsApp.':'Your catalogue is ready. The shop owner can add and publish products from the admin panel.',!error);render();if(!window.sivakarRealtime){window.sivakarRealtime=true;db.channel('sivakar-stock-live').on('postgres_changes',{event:'*',schema:'public',table:'products'},()=>load()).subscribe()}}load();
+async function load(){if(!configured()){setStatus('Setup required: add your NEW Supabase project URL and anon key in supabase-config.js, then reload this page.');return}db=supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY);const {data,error}=await db.from('products')
+  .select('id,name,description,category,product_type,selling_unit,stock_quantity,pieces_per_box,actual_price,discount_percent,image_url,video_url,is_published,display_order')
+  .eq('is_published',true)
+  .order('display_order')
+  .order('name');if(error){setStatus('Could not load products. Check that the new database schema is installed. Details: '+error.message);return}products=data||[];setStatus(products.length?'Catalogue updated. Select quantities and review your order before sending it through WhatsApp.':'Your catalogue is ready. The shop owner can add and publish products from the admin panel.',!error);render();if(!window.sivakarRealtime){window.sivakarRealtime=true;db.channel('sivakar-stock-live').on('postgres_changes',{event:'*',schema:'public',table:'products'},()=>load()).subscribe()}}load();
 </script></body></html>
