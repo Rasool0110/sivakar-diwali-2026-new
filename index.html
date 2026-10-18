@@ -147,7 +147,7 @@ function card(p){const d=Number(p.discount_percent||0),actual=Number(p.actual_pr
   String(p.category || '').trim().toLowerCase() === 'standard'
     ? '80% + 10% OFF'
     : d + '% OFF'
-}</span>`:''}</div><div class="unit-label">Price per ${label}</div><div class="stock ${stock?'':'out'}">${stockLabel(p)}</div>${p.video_url?`<a class="video-link" href="${esc(p.video_url)}" target="_blank" rel="noopener">▶ Watch product video</a>`:''}<div class="qty-row"><button class="qty-btn" data-minus="${p.id}" aria-label="Remove one ${esc(p.name)}" ${n<=0?'disabled':''}>−</button><input class="qty-input" data-qty="${p.id}" aria-label="Quantity for ${esc(p.name)}" type="number" min="0" max="${stock}" step="1" value="${n}" ${stock<=0?'disabled':''}><button class="qty-btn" data-plus="${p.id}" aria-label="Add one ${esc(p.name)}" ${n>=stock?'disabled':''}>+</button></div><div class="line-total">Item total: ${money(sale*n)}</div></div></article>`}
+}</span>`:''}</div><div class="unit-label">Price per ${label}</div><div class="stock ${stock?'':'out'}">${stockLabel(p)}</div><div class="qty-row"><button class="qty-btn" data-minus="${p.id}" aria-label="Remove one ${esc(p.name)}" ${n<=0?'disabled':''}>−</button><input class="qty-input" data-qty="${p.id}" aria-label="Quantity for ${esc(p.name)}" type="number" min="0" max="${stock}" step="1" value="${n}" ${stock<=0?'disabled':''}><button class="qty-btn" data-plus="${p.id}" aria-label="Add one ${esc(p.name)}" ${n>=stock?'disabled':''}>+</button></div><div class="line-total">Item total: ${money(sale*n)}</div></div></article>`}
 
 function renderTypeFilters() {
   function makeButtons(section, selectedType) {
