@@ -9,7 +9,7 @@
 
 .nav .brand img {
   display: block;
-  width: 95px;
+  width: 112px;
   max-width: 32vw;
   height: 46px;
   object-fit: contain;
@@ -17,58 +17,88 @@
 }
 .cart-open,.btn{border:0;border-radius:10px;padding:11px 15px;cursor:pointer;font-weight:700}.cart-open,.btn.primary{background:var(--red);color:white}.btn.secondary{background:#eee3d2;color:var(--ink)}
 
+
 .hero {
-  margin: 24px auto 30px;
   max-width: 1280px;
-  min-height: 420px;
-  padding: clamp(28px, 6vw, 76px);
-  border-radius: 26px;
-  overflow: hidden;
-
-  background:
-    linear-gradient(
-      90deg,
-      rgba(28, 14, 10, 0.78) 0%,
-      rgba(28, 14, 10, 0.48) 55%,
-      rgba(28, 14, 10, 0.12) 100%
-    ),
-    url("./images/banner.png") center / cover no-repeat;
-
-  color: #fff7e7;
+  margin: 24px auto 30px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: flex-start;
+  gap: 24px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 26px;
+}
+
+.hero-copy {
+  width: 100%;
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 16px 12px 0;
+  text-align: center;
 }
 
 .hero .eyebrow {
-  display: inline-block;
-  margin-bottom: 16px;
-  color: #ffd68b;
+  color: var(--red);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
+  margin-bottom: 14px;
 }
 
 .hero h1 {
-  max-width: 680px;
   margin: 0;
   font-family: 'Playfair Display', serif;
-  font-size: clamp(38px, 5.5vw, 70px);
-  line-height: 1.08;
-  letter-spacing: -0.035em;
-  text-wrap: balance;
+  font-size: clamp(38px, 5vw, 62px);
+  line-height: 1.12;
+  letter-spacing: -0.025em;
 }
 
 .hero p {
-  max-width: 540px;
-  margin: 20px 0 0;
-  color: #fff1db;
-  font-size: clamp(14px, 1.5vw, 17px);
+  max-width: 680px;
+  margin: 18px auto 0;
+  color: var(--muted);
+  font-size: 15px;
   line-height: 1.8;
 }
+
+.hero-banner {
+  width: 100%;
+  overflow: hidden;
+  border-radius: 18px;
+  background: #f3e8d7;
+}
+
+.hero-banner img {
+  display: block;
+  width: 100%;
+  height: clamp(200px, 30vw, 380px);
+  object-fit: cover;
+  object-position: center;
+}
 .main{max-width:1280px;margin:auto;padding:0 20px 70px}.status{padding:12px 14px;border-radius:10px;margin-bottom:18px;background:#fff0d7;color:#704a15;font-size:13px}.toolbar{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:22px}.search{flex:1;min-width:210px;border:1px solid var(--line);background:white;border-radius:12px;padding:13px 15px}.filters{display:flex;gap:8px;flex-wrap:wrap}.filter{border:1px solid var(--line);background:white;padding:10px 14px;border-radius:99px;cursor:pointer}.filter.active{background:var(--red);border-color:var(--red);color:white}.section-head{display:flex;justify-content:space-between;align-items:end;margin:28px 0 14px}.section-head h2{font-family:'Playfair Display',serif;font-size:27px;margin:0}.section-head p{margin:5px 0 0;color:var(--muted);font-size:13px}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px}.product{background:var(--paper);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;min-width:0}.media{aspect-ratio:4/3;background:#f3e8d7;position:relative;display:grid;place-items:center;overflow:hidden}.media img{width:100%;height:100%;object-fit:cover}.fallback{font-size:42px;color:#b69b73}.tag{position:absolute;left:10px;top:10px;background:#fff8e9;border-radius:99px;padding:6px 9px;font-size:10px;text-transform:uppercase;font-weight:700}.product-body{padding:14px;display:flex;flex-direction:column;flex:1}.product h3{font-size:15px;line-height:1.35;margin:0 0 6px}.desc{font-size:12px;color:var(--muted);line-height:1.5;min-height:18px}.prices{display:flex;align-items:baseline;gap:8px;margin-top:12px;flex-wrap:wrap}.sale{font-size:20px;font-weight:700;color:var(--red)}.actual{font-size:12px;color:#9c8b7b;text-decoration:line-through}.discount{font-size:10px;font-weight:700;color:var(--green);background:#e7f3e8;padding:4px 6px;border-radius:5px}.unit-label,.stock{font-size:11px;color:var(--muted);margin-top:8px}.stock.out{color:var(--red)}.video-link{margin-top:9px;font-size:12px;color:var(--red);text-decoration:none;font-weight:700}.qty-row{display:flex;align-items:center;gap:7px;margin-top:13px}.qty-btn{width:34px;height:34px;border:1px solid var(--line);border-radius:9px;background:#fff;cursor:pointer;font-size:19px}.qty-input{width:54px;height:34px;text-align:center;border:1px solid var(--line);border-radius:8px}.qty-btn:disabled,.qty-input:disabled{opacity:.35;cursor:not-allowed}.line-total{margin-top:9px;font-size:13px;font-weight:700}.empty{padding:35px 15px;text-align:center;border:1px dashed #d8c6ad;border-radius:16px;color:var(--muted);grid-column:1/-1}.hidden{display:none!important}.cartbar{position:sticky;bottom:0;background:#2b1b13;color:#fff4df;padding:13px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;z-index:5;box-shadow:0 -5px 25px #0001}.cartbar strong{font-size:16px}.cartbar small{display:block;color:#f5dfc4;margin-top:3px}.modal-backdrop{position:fixed;inset:0;background:#160d09a8;display:none;align-items:flex-end;justify-content:center;z-index:10;padding:0}.modal-backdrop.open{display:flex}.modal{background:var(--paper);width:min(760px,100%);max-height:92vh;overflow:auto;border-radius:22px 22px 0 0;padding:22px}.modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.modal h2{font-family:'Playfair Display',serif;margin:0}.close{border:0;background:#eee3d2;border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:20px}.cart-list{margin:16px 0}.cart-line{display:grid;grid-template-columns:1fr auto;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}.cart-line small{display:block;color:var(--muted);margin-top:4px}.cart-line .remove{color:var(--red);border:0;background:transparent;cursor:pointer;font-size:12px;padding:6px 0}.grand{display:flex;justify-content:space-between;font-size:18px;font-weight:700;padding:14px 0;border-top:2px solid var(--line)}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}.field label{font-size:12px;font-weight:700}.field input,.field textarea{border:1px solid #d9cbb8;border-radius:9px;padding:12px;background:white;min-width:0}.field textarea{min-height:85px;resize:vertical}.modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:16px}.note{font-size:12px;line-height:1.55;color:var(--muted)}.footer{background:#2b1b13;color:#f9e6c4;padding:28px 22px;text-align:center;font-size:12px}.footer a{color:#ffcb73}
+.footer-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.footer-brand img {
+  display: block;
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+}
+
+.footer-brand span {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
 .footer {
   background: #2b1b13;
   color: #f9e6c4;
@@ -157,7 +187,35 @@
 button:disabled {
   cursor: not-allowed;
 }
-sale{font-size:17px}.hero{margin:15px 10px 23px;border-radius:19px}.main{padding:0 10px 40px}.section-head h2{font-size:23px}.nav{padding:15px}.form-grid{grid-template-columns:1fr}.field.full{grid-column:1}.cartbar{padding:12px}.cartbar .btn{padding:10px 12px}}@media(max-width:370px){.grid{grid-template-columns:1fr 1fr}.qty-btn{width:30px}.qty-input{width:45px}}
+sale{font-size:17px}.hero{margin:15px 10px 23px;border-radius:19px}.main{padding:0 10px 40px}.section-head h2{font-size:23px}.nav{padding:15px}.form-grid{grid-template-columns:1fr}.field.full{grid-column:1}.cartbar{padding:12px}.cartbar .btn{padding:10px 12px}}@media(max-width:370px){.grid{grid-template-columns:1fr 1fr}.qty-btn{width:30px}.qty-input{width:45px}
+.hero {
+  margin: 15px 10px 23px;
+  padding: 12px;
+  gap: 18px;
+  border-radius: 19px;
+}
+
+.hero-copy {
+  padding: 16px 4px 0;
+}
+
+.hero h1 {
+  font-size: clamp(35px, 9vw, 46px);
+}
+
+.hero p {
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.hero-banner {
+  border-radius: 14px;
+}
+
+.hero-banner img {
+  height: 220px;
+}
+}
 
 /* Click-to-enlarge product image and video preview */
 .media img {
@@ -255,7 +313,18 @@ sale{font-size:17px}.hero{margin:15px 10px 23px;border-radius:19px}.main{padding
   <img src="./images/logo.png" alt="Raghuveera Crackers">
 </div>
 <button class="cart-open" id="openCart">Review order · <span id="navCartCount">0</span></button></header>
-<section class="hero"><div class="eyebrow">A season of light</div><h1>Make this Diwali<br>shine brighter.</h1><p>Explore our crackers collection, choose your quantities, and send your order directly to Raghuveera Crackers on WhatsApp.</p></section>
+
+<section class="hero">
+  <div class="hero-copy">
+    <div class="eyebrow">A season of light</div>
+    <h1>Make this Diwali<br>shine brighter.</h1>
+    <p>Explore our crackers collection, choose your quantities, and send your order directly to Raghuveera Crackers on WhatsApp.</p>
+  </div>
+
+  <div class="hero-banner">
+    <img src="./images/banner.jpg" alt="Raghuveera Diwali crackers">
+  </div>
+</section>
 <main class="main"><div id="status" class="status">Connect the new Supabase project to load the live product catalogue.</div><div class="toolbar"><input id="search" class="search" type="search" placeholder="Search crackers by name…" aria-label="Search products"><div class="filters"><button class="filter active" data-filter="all">All items</button><button class="filter" data-filter="standard">Standard</button><button class="filter" data-filter="non_standard">Non-standard</button></div></div><section id="standardSection"><div class="section-head"><div><h2>Standard crackers</h2><p>Our standard collection</p></div><span id="standardCount"></span></div><div id="standardTypeFilters" class="filters" style="margin-bottom:14px"></div><div id="standardGrid" class="grid"></div></section><section id="nonStandardSection"><div class="section-head"><div><h2>Non-standard crackers</h2><p>Explore more festive favourites</p></div><span id="nonStandardCount"></span></div><div id="nonStandardTypeFilters" class="filters" style="margin-bottom:14px"></div><div id="nonStandardGrid" class="grid"></div></section></main>
 <div id="cartBar" class="cartbar hidden"><div><strong id="barTotal">₹0</strong><small id="barDetails">0 items selected</small></div><button class="btn primary" id="barReview">Review order →</button></div>
 <div class="modal-backdrop" id="cartModal" role="dialog" aria-modal="true" aria-labelledby="cartTitle"><div class="modal"><div class="modal-head"><h2 id="cartTitle">Review your order</h2><button class="close" id="closeCart" aria-label="Close">×</button></div><div id="cartItems" class="cart-list"></div><div class="grand"><span>Order total</span><span id="modalTotal">₹0</span></div><form id="customerForm"><h3>Customer details</h3><div class="form-grid"><div class="field"><label for="customerName">Full name *</label><input id="customerName" required maxlength="120" autocomplete="name" placeholder="Your name"></div><div class="field"><label for="customerMobile">Mobile number *</label><input id="customerMobile" required type="tel" inputmode="tel" maxlength="20" autocomplete="tel" placeholder="10-digit mobile number"></div><div class="field full"><label for="customerAddress">Delivery address *</label><textarea id="customerAddress" required maxlength="700" autocomplete="street-address" placeholder="House / flat, street, area, city, PIN code"></textarea></div></div><p class="note">When you click Place Order, WhatsApp opens with your order details. Please press Send in WhatsApp to submit your order. Your order is not confirmed until Raghuveera replies.</p><div id="checkoutError" class="status hidden"></div><div class="modal-actions"><button class="btn secondary" type="button" id="continueShopping">Continue shopping</button><button class="btn primary" type="submit" id="placeOrder">Place order on WhatsApp ↗</button></div></form></div></div>
