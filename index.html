@@ -143,11 +143,9 @@ function card(p){const d=Number(p.discount_percent||0),actual=Number(p.actual_pr
   ` : ''}
 </div>
 </div><div class="product-body"><h3>${esc(p.name)}</h3><div class="desc">${esc(p.description||'Diwali crackers')}</div><div class="prices"><span class="sale">${money(sale)}</span>${d>0?`<span class="actual">${money(actual)}</span>
-<span class="discount">${
-  String(p.category || '').trim().toLowerCase() === 'standard'
-    ? '80% + 10% OFF'
-    : d + '% OFF'
-}</span>`:''}</div><div class="unit-label">Price per ${label}</div><div class="stock ${stock?'':'out'}">${stockLabel(p)}</div><div class="qty-row"><button class="qty-btn" data-minus="${p.id}" aria-label="Remove one ${esc(p.name)}" ${n<=0?'disabled':''}>−</button><input class="qty-input" data-qty="${p.id}" aria-label="Quantity for ${esc(p.name)}" type="number" min="0" max="${stock}" step="1" value="${n}" ${stock<=0?'disabled':''}><button class="qty-btn" data-plus="${p.id}" aria-label="Add one ${esc(p.name)}" ${n>=stock?'disabled':''}>+</button></div><div class="line-total">Item total: ${money(sale*n)}</div></div></article>`}
+
+<span class="discount">${d}% OFF</span>
+`:''}</div><div class="unit-label">Price per ${label}</div><div class="stock ${stock?'':'out'}">${stockLabel(p)}</div><div class="qty-row"><button class="qty-btn" data-minus="${p.id}" aria-label="Remove one ${esc(p.name)}" ${n<=0?'disabled':''}>−</button><input class="qty-input" data-qty="${p.id}" aria-label="Quantity for ${esc(p.name)}" type="number" min="0" max="${stock}" step="1" value="${n}" ${stock<=0?'disabled':''}><button class="qty-btn" data-plus="${p.id}" aria-label="Add one ${esc(p.name)}" ${n>=stock?'disabled':''}>+</button></div><div class="line-total">Item total: ${money(sale*n)}</div></div></article>`}
 
 function renderTypeFilters() {
   function makeButtons(section, selectedType) {
