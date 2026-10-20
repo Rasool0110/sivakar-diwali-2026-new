@@ -368,9 +368,23 @@ sale{font-size:17px}.hero{margin:15px 10px 23px;border-radius:19px}.main{padding
     <p>Explore our crackers collection, choose your quantities, and send your order directly to Raghuveera Crackers on WhatsApp.</p>
   </div>
 
-  <div class="hero-banner">
-    <img src="./images/banner.jpeg" alt="Raghuveera Diwali crackers">
-  </div>
+  
+<div class="hero-banner">
+  <picture>
+    <!-- Mobile banner -->
+    <source
+      media="(max-width: 768px)"
+      srcset="./images/mobilebanner.webp"
+    >
+
+    <!-- Desktop banner -->
+    <img
+      src="./images/banner.webp"
+      alt="Raghuveera Diwali crackers"
+    >
+  </picture>
+</div>
+
 </section>
 <main class="main"><div id="status" class="status">Connect the new Supabase project to load the live product catalogue.</div><div class="toolbar"><input id="search" class="search" type="search" placeholder="Search crackers by name…" aria-label="Search products"><div class="filters"><button class="filter active" data-filter="all">All items</button><button class="filter" data-filter="standard">Standard</button><button class="filter" data-filter="non_standard">Non-standard</button></div></div><section id="standardSection"><div class="section-head"><div><h2>Standard crackers</h2><p>Our standard collection</p></div><span id="standardCount"></span></div><div id="standardTypeFilters" class="filters" style="margin-bottom:14px"></div><div id="standardGrid" class="grid"></div></section><section id="nonStandardSection"><div class="section-head"><div><h2>Non-standard crackers</h2><p>Explore more festive favourites</p></div><span id="nonStandardCount"></span></div><div id="nonStandardTypeFilters" class="filters" style="margin-bottom:14px"></div><div id="nonStandardGrid" class="grid"></div></section></main>
 <div id="cartBar" class="cartbar hidden"><div><strong id="barTotal">₹0</strong><small id="barDetails">0 items selected</small></div><button class="btn primary" id="barReview">Review order →</button></div>
