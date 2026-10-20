@@ -354,7 +354,66 @@ sale{font-size:17px}.hero{margin:15px 10px 23px;border-radius:19px}.main{padding
     margin: 0;
   }
 }
+
+/* Scrolling announcement bar */
+.announcement-bar {
+  width: 100%;
+  overflow: hidden;
+  background: #8b0000;
+  color: #ffffff;
+  padding: 12px 0;
+  white-space: nowrap;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.announcement-track {
+  display: flex;
+  width: max-content;
+  animation: announcement-scroll 25s linear infinite;
+}
+
+.announcement-track span {
+  flex-shrink: 0;
+  padding-right: 60px;
+}
+
+@keyframes announcement-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Mobile announcement */
+@media (max-width: 768px) {
+  .announcement-bar {
+    padding: 10px 0;
+    font-size: 14px;
+  }
+
+  .announcement-track {
+    animation-duration: 20s;
+  }
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .announcement-track {
+    animation: none;
+  }
+}
 </style></head><body>
+<!-- Scrolling order announcement -->
+<div class="announcement-bar">
+  <div class="announcement-track">
+    <span>🎆 Raghuveera Diwali Crackers — Orders Close on November 5, 2026! Place Your Orders Early! 🎇</span>
+    <span aria-hidden="true">🎆 Raghuveera Diwali Crackers — Orders Close on November 5, 2026! Place Your Orders Early! 🎇</span>
+  </div>
+</div>
 <div class="topline">RAGHUVEERA · DIWALI 2026 · CELEBRATE BRIGHTER</div><header class="nav">
 <div class="brand">
   <img src="./images/logo.png" alt="Raghuveera Crackers">
