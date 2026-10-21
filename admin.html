@@ -437,6 +437,7 @@ $('addOfflineItem').addEventListener('click', () => {
   $('offlineProductSelect').value = '';
   $('offlineProductQuantity').value = '1';
   updateOfflineTotals();
+  console.log('Offline items:', JSON.stringify(offlineItems));
 });
 
 $('offlineItemRows').addEventListener('click', e => {
