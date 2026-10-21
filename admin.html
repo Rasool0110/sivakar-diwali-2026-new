@@ -238,6 +238,8 @@ async function loadOrders() {
   }
 
   const rows = data || [];
+  const realSales = rows.filter(o => !o.is_test);
+  const testOrders = rows.filter(o => o.is_test);
   $('orderCount').textContent = `· ${rows.length} latest orders`;
 
   $('orderRows').innerHTML = rows.length
