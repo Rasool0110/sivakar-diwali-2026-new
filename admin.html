@@ -31,8 +31,64 @@
   </select>
   <span class="help">Choose the type of cracker independently of Standard / Non-standard.</span>
 </div><div class="field"><label for="sellingUnit">Selling unit *</label><select id="sellingUnit"><option value="box">Box</option><option value="piece">Piece</option><option value="packet">Packet</option><option value="bag">Bag</option></select><span class="help">One product has one selling unit. Customers order in that unit only.</span></div><div class="field"><label for="stockQuantity">Stock quantity *</label><input id="stockQuantity" type="number" min="0" step="1" value="0" required><span class="help">How many boxes, pieces, packets or bags are available to sell.</span></div><div class="field"><label for="piecesPerBox">Pieces per box</label><input id="piecesPerBox" type="number" min="1" step="1" value="1" required><span class="help">For box products, used to calculate internal units; does not change the selling unit.</span></div><div class="field"><label for="actualPrice">Actual price per selling unit (₹) *</label><input id="actualPrice" type="number" min="0" step="0.01" value="0" required></div><div class="field"><label for="discountPercent">Discount (%)</label><input id="discountPercent" type="number" min="0" max="100" step="0.01" value="0" required></div><div class="field"><label for="costPrice">Private cost per selling unit (₹)</label><input id="costPrice" type="number" min="0" step="0.01" value="0"><span class="help">Admin-only. Never shown to customers.</span></div><div class="field"><label for="displayOrder">Display order</label><input id="displayOrder" type="number" step="1" value="0"></div><div class="field"><label for="published">Catalogue visibility</label><select id="published"><option value="true">Published</option><option value="false">Hidden</option></select></div><div class="field full"><label for="description">Description (optional)</label><textarea id="description" maxlength="500" placeholder="Short product description"></textarea></div><div class="field"><label for="imageFile">Product image</label><input id="imageFile" type="file" accept="image/jpeg,image/png,image/webp,image/avif"><img id="imagePreview" class="preview" alt="Image preview"></div><div class="field"><label for="videoFile">Product video (optional)</label><input id="videoFile" type="file" accept="video/mp4,video/webm,video/quicktime"><video id="videoPreview" class="preview" controls></video></div></div><div class="calc" id="calculation">Discounted price: ₹0 · Internal units: 0 · Estimated margin per unit: ₹0</div><div class="actions"><button id="saveBtn" class="btn" type="submit">Save product</button><button id="resetBtn" class="btn secondary" type="button">Clear form</button></div></form></section>
-<section id="listPanel" class="panel hidden"><h2>Product inventory <span id="productCount" class="note"></span></h2><div style="max-width:400px;margin-bottom:15px"><label for="adminSearch">Search products</label><input id="adminSearch" type="search" placeholder="Search by product name"></div><div class="table-wrap"><table><thead><tr><th>Photo</th><th>Product</th><th>Stock / internal units</th><th>Price / margin</th><th>Visibility</th><th>Actions</th></tr></thead><tbody id="productRows"></tbody></table></div><p class="note">Internal units = stock quantity × pieces per box for box products; for other selling units, internal units equal stock quantity. Margin shown here is estimated using discounted selling price minus cost, before shop overheads.</p></section><section id="ordersPanel" class="panel hidden"><h2>Customer orders <span id="orderCount" class="note"></span></h2><p class="note">Stock is deducted when an order request is recorded. Confirm only after the customer contacts you. Cancelling a pending/confirmed order restores its reserved quantities; do not cancel an order if you already fulfilled it without checking inventory.</p><div class="table-wrap"><table><thead><tr><th>Reference / date</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead><tbody id="orderRows"></tbody></table></div><div class="actions"><button id="refreshOrders" class="btn secondary" type="button">Refresh orders</button></div></section><section class="panel"><h2>Important</h2><p class="note">Do not add your Supabase service-role key to this website. Order requests are stored in Supabase and stock is reserved atomically before WhatsApp opens. The customer must still press Send in WhatsApp. Orders remain pending until you confirm them. Cancelling an order restores stock. No online payment is taken.</p></section></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script>
+<section id="listPanel" class="panel hidden"><h2>Product inventory <span id="productCount" class="note"></span></h2><div style="max-width:400px;margin-bottom:15px"><label for="adminSearch">Search products</label><div class="actions">
+  <button id="importProductsBtn" class="btn secondary" type="button">
+    Import Products from Excel
+  </button>
+  <input
+    id="excelFile"
+    type="file"
+    accept=".xlsx,.xls,.csv"
+    hidden
+  >
+</div>
+<input id="adminSearch" type="search" placeholder="Search by product name"></div><div id="excelImportPanel" class="panel hidden">
+  <h3>Import Products from Excel</h3>
+  <p class="note">
+    Map each Excel column to the correct field. Existing products will
+    not be updated or deleted. Imported products will be hidden until reviewed.
+  </p>
+
+  <div id="excelFileInfo" class="note"></div>
+
+  <h4>Map Excel columns</h4>
+  <div id="excelMappingFields"></div>
+
+  <div class="actions">
+    <button id="previewExcelBtn" class="btn secondary" type="button">
+      Preview Import
+    </button>
+    <button id="cancelExcelBtn" class="btn secondary" type="button">
+      Cancel
+    </button>
+  </div>
+
+  <div id="excelPreviewArea" class="hidden">
+    <h4>Import Preview</h4>
+    <p id="excelPreviewSummary" class="note"></p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Category</th>
+            <th>Stock</th>
+            <th>Actual price</th>
+            <th>Private cost</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody id="excelPreviewRows"></tbody>
+      </table>
+    </div>
+    <div class="actions">
+      <button id="confirmExcelImportBtn" class="btn" type="button" disabled>
+        Import New Products
+      </button>
+    </div>
+  </div>
+</div><div class="table-wrap"><table><thead><tr><th>Photo</th><th>Product</th><th>Stock / internal units</th><th>Price / margin</th><th>Visibility</th><th>Actions</th></tr></thead><tbody id="productRows"></tbody></table></div><p class="note">Internal units = stock quantity × pieces per box for box products; for other selling units, internal units equal stock quantity. Margin shown here is estimated using discounted selling price minus cost, before shop overheads.</p></section><section id="ordersPanel" class="panel hidden"><h2>Customer orders <span id="orderCount" class="note"></span></h2><p class="note">Stock is deducted when an order request is recorded. Confirm only after the customer contacts you. Cancelling a pending/confirmed order restores its reserved quantities; do not cancel an order if you already fulfilled it without checking inventory.</p><div class="table-wrap"><table><thead><tr><th>Reference / date</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead><tbody id="orderRows"></tbody></table></div><div class="actions"><button id="refreshOrders" class="btn secondary" type="button">Refresh orders</button></div></section><section class="panel"><h2>Important</h2><p class="note">Do not add your Supabase service-role key to this website. Order requests are stored in Supabase and stock is reserved atomically before WhatsApp opens. The customer must still press Send in WhatsApp. Orders remain pending until you confirm them. Cancelling an order restores stock. No online payment is taken.</p></section></div>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script>
 const cfg=window.SIVAKAR_CONFIG||{},bucket='sivakar-product-media';let db=null,allProducts=[],currentUser=null;const $=id=>document.getElementById(id);const money=n=>'₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2});function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function configured(){return cfg.SUPABASE_URL&&cfg.SUPABASE_ANON_KEY&&!cfg.SUPABASE_URL.includes('PASTE_')&&!cfg.SUPABASE_ANON_KEY.includes('PASTE_')}function msg(t,ok=false){$('message').textContent=t;$('message').classList.toggle('ok',ok);$('message').classList.remove('hidden')}function hideMsg(){$('message').classList.add('hidden')}function showApp(on){$('loginPanel').classList.toggle('hidden',on);$('editorPanel').classList.toggle('hidden',!on);$('listPanel').classList.toggle('hidden',!on);$('ordersPanel').classList.toggle('hidden',!on);$('signOut').classList.toggle('hidden',!on)}function salePrice(p){return Number(p.actual_price||0)*(1-Number(p.discount_percent||0)/100)}function internal(p){return Number(p.stock_quantity||0)*(p.selling_unit==='box'?Number(p.pieces_per_box||1):1)}function updateCalc(){const actual=Number($('actualPrice').value||0),d=Number($('discountPercent').value||0),stock=Number($('stockQuantity').value||0),pieces=Number($('piecesPerBox').value||1),cost=Number($('costPrice').value||0),unit=$('sellingUnit').value,discounted=actual*(1-d/100),units=stock*(unit==='box'?pieces:1);$('calculation').textContent=`Discounted price per selling unit: ${money(discounted)} · Internal units: ${units} · Estimated margin per unit: ${money(discounted-cost)} · Potential margin for all stock: ${money((discounted-cost)*stock)} (before overheads)`}['actualPrice','discountPercent','stockQuantity','piecesPerBox','costPrice','sellingUnit'].forEach(id=>$(id).addEventListener('input',updateCalc));
 async function init(){if(!configured()){showApp(false);msg('Setup required: put your NEW Supabase project URL and anon key in supabase-config.js. Follow README.md to set up admin access.');return}db=supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY);const {data:{session}}=await db.auth.getSession();if(session){currentUser=session.user;await verifyAdmin()}else showApp(false);db.auth.onAuthStateChange(async(_event,session)=>{currentUser=session?.user||null;if(currentUser)await verifyAdmin();else showApp(false)})}async function verifyAdmin(){const {data,error}=await db.from('app_admins').select('user_id').eq('user_id',currentUser.id).maybeSingle();if(error||!data){showApp(false);msg('Signed in but not authorized. Add this user UUID to public.app_admins in your NEW project.');return}showApp(true);hideMsg();await loadProducts();await loadOrders()}$('loginForm').addEventListener('submit',async e=>{e.preventDefault();if(!db)return;const b=e.submitter;b.disabled=true;const {error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});b.disabled=false;if(error)msg('Sign-in failed: '+error.message)});$('signOut').addEventListener('click',async()=>{await db.auth.signOut();showApp(false);msg('Signed out.')});
 function resetForm(){ $('productForm').reset();$('productId').value='';$('stockQuantity').value=0;$('piecesPerBox').value=1;$('actualPrice').value=0;$('discountPercent').value=0;$('costPrice').value=0;$('displayOrder').value=0;$('published').value='true';$('formTitle').textContent='Add a product';$('saveBtn').textContent='Save product';$('imagePreview').style.display='none';$('videoPreview').style.display='none';$('imageFile').value='';$('videoFile').value='';updateCalc()}$('resetBtn').addEventListener('click',resetForm);function uploadExt(file){return file.name.split('.').pop().toLowerCase().replace(/[^a-z0-9]/g,'')||'bin'}async function uploadMedia(file,kind,id){if(!file)return '';if(file.size>50*1024*1024)throw new Error('Media files must be 50 MB or smaller.');const path=`${kind}/${id}/${Date.now()}-${crypto.randomUUID()}.${uploadExt(file)}`;const {error}=await db.storage.from(bucket).upload(path,file,{upsert:false,contentType:file.type||undefined});if(error)throw error;return db.storage.from(bucket).getPublicUrl(path).data.publicUrl}function previewFile(inputId,previewId){const f=$(inputId).files[0];if(!f)return;const el=$(previewId);el.src=URL.createObjectURL(f);el.style.display='block'}$('imageFile').addEventListener('change',()=>previewFile('imageFile','imagePreview'));$('videoFile').addEventListener('change',()=>previewFile('videoFile','videoPreview'));
@@ -44,5 +100,413 @@ $('productForm').addEventListener('submit',async e=>{e.preventDefault();if(!db||
   selling_unit:$('sellingUnit').value,stock_quantity:Math.max(0,Math.floor(Number($('stockQuantity').value)||0)),pieces_per_box:Math.max(1,Math.floor(Number($('piecesPerBox').value)||1)),actual_price:Math.max(0,Number($('actualPrice').value)||0),discount_percent:Math.min(100,Math.max(0,Number($('discountPercent').value)||0)),image_url,video_url,is_published:$('published').value==='true',display_order:Number($('displayOrder').value)||0};let result;if(existing)result=await db.from('products').update(row).eq('id',id);else result=await db.from('products').insert({...row,id});if(result.error)throw result.error;const costRow={product_id:id,cost_per_selling_unit:Math.max(0,Number($('costPrice').value)||0)};const costResult=await db.from('product_costs').upsert(costRow,{onConflict:'product_id'});if(costResult.error)throw costResult.error;msg(existing?'Product updated successfully.':'Product added successfully.',true);resetForm();await loadProducts()}catch(err){msg('Could not save product: '+(err.message||String(err)))}finally{btn.disabled=false;btn.textContent='Save product'}});
 async function loadProducts(){const {data,error}=await db.from('products').select('*').order('display_order').order('name');if(error){msg('Unable to load products: '+error.message);return}allProducts=data||[];const {data:costs,error:costError}=await db.from('product_costs').select('*');if(costError){msg('Products loaded but private cost data could not be loaded: '+costError.message);return}const byId=Object.fromEntries((costs||[]).map(c=>[c.product_id,c.cost_per_selling_unit]));allProducts.forEach(p=>p.cost_per_selling_unit=Number(byId[p.id]||0));renderRows()}function renderRows(){const q=$('adminSearch').value.trim().toLowerCase(),list=allProducts.filter(p=>p.name.toLowerCase().includes(q));$('productCount').textContent=`· ${allProducts.length} total · ${allProducts.filter(p=>p.is_published).length} published`;$('productRows').innerHTML=list.length?list.map(p=>`<tr><td>${p.image_url?`<img src="${esc(p.image_url)}" alt="">`:'—'}</td><td><strong>${esc(p.name)}</strong><span class="sub">${p.category==='standard'?'Standard':'Non-standard'} · ${esc(p.product_type||'Other')} · ${esc(p.selling_unit)}</span></td><td>${p.stock_quantity} ${p.selling_unit}(s)<span class="sub">Internal units: ${internal(p)}</span></td><td>${money(p.actual_price)}<span class="sub">${p.discount_percent}% off · sale ${money(salePrice(p))}</span><span class="sub">Cost ${money(p.cost_per_selling_unit)} · margin ${money(salePrice(p)-p.cost_per_selling_unit)}/unit</span></td><td><span class="status-pill ${p.is_published?'':'off'}">${p.is_published?'Published':'Hidden'}</span></td><td><div class="top-actions"><button class="btn secondary" data-edit="${p.id}">Edit</button><button class="btn secondary" data-toggle="${p.id}">${p.is_published?'Hide':'Publish'}</button><button class="btn danger" data-delete="${p.id}">Delete</button></div></td></tr>`).join(''):'<tr><td colspan="6">No products found. Add your first product above.</td></tr>'}$('adminSearch').addEventListener('input',renderRows);$('productRows').addEventListener('click',async e=>{const edit=e.target.closest('[data-edit]')?.dataset.edit,toggle=e.target.closest('[data-toggle]')?.dataset.toggle,del=e.target.closest('[data-delete]')?.dataset.delete;if(edit){const p=allProducts.find(x=>x.id===edit);if(!p)return;$('productId').value=p.id;for(const [id,key] of [['name','name'],['description','description'],['category','category'],['productType','product_type'],['sellingUnit','selling_unit'],['stockQuantity','stock_quantity'],['piecesPerBox','pieces_per_box'],['actualPrice','actual_price'],['discountPercent','discount_percent'],['displayOrder','display_order']])$(id).value=p[key]??'';$('costPrice').value=p.cost_per_selling_unit||0;$('published').value=String(p.is_published);$('formTitle').textContent='Edit product';$('saveBtn').textContent='Update product';if(p.image_url){$('imagePreview').src=p.image_url;$('imagePreview').style.display='block'}else $('imagePreview').style.display='none';if(p.video_url){$('videoPreview').src=p.video_url;$('videoPreview').style.display='block'}else $('videoPreview').style.display='none';$('imageFile').value='';$('videoFile').value='';updateCalc();$('editorPanel').scrollIntoView({behavior:'smooth',block:'start'})}else if(toggle){const p=allProducts.find(x=>x.id===toggle);const {error}=await db.from('products').update({is_published:!p.is_published}).eq('id',toggle);if(error)msg('Could not change visibility: '+error.message);else{msg(p.is_published?'Product hidden from customers.':'Product published to customers.',true);await loadProducts()}}else if(del){const p=allProducts.find(x=>x.id===del);if(!confirm(`Permanently delete “${p.name}”? Hiding is safer if you may need it later.`))return;const {error}=await db.from('products').delete().eq('id',del);if(error)msg('Could not delete product: '+error.message);else{msg('Product deleted.',true);await loadProducts()}}});async function loadOrders(){if(!db||!currentUser)return;const {data,error}=await db.from('orders').select('id,reference,customer_name,customer_mobile,delivery_address,status,total,created_at,order_items(product_name,selling_unit,quantity,unit_price,line_total)').order('created_at',{ascending:false}).limit(100);if(error){msg('Products loaded, but orders could not be loaded: '+error.message);return}const rows=data||[];$('orderCount').textContent=`· ${rows.length} latest orders`;$('orderRows').innerHTML=rows.length?rows.map(o=>{const items=(o.order_items||[]).map(i=>`${esc(i.product_name)} — ${i.quantity} ${esc(i.selling_unit)} × ${money(i.unit_price)}`).join('<br>');const date=new Date(o.created_at).toLocaleString('en-IN');return `<tr><td><strong>${esc(o.reference)}</strong><span class="sub">${esc(date)}</span></td><td>${esc(o.customer_name)}<span class="sub">${esc(o.customer_mobile)}</span><span class="sub">${esc(o.delivery_address)}</span></td><td>${items||'—'}</td><td><strong>${money(o.total)}</strong></td><td><span class="status-pill ${o.status==='pending_confirmation'?'off':''}">${esc(o.status.replaceAll('_',' '))}</span></td><td><div class="top-actions">${o.status==='pending_confirmation'?`<button class="btn secondary" data-confirm-order="${o.id}">Confirm</button>`:''}${o.status!=='cancelled'?`<button class="btn danger" data-cancel-order="${o.id}">Cancel & restore stock</button>`:''}</div></td></tr>`}).join(''):'<tr><td colspan="6">No orders yet.</td></tr>'}
 $('refreshOrders').addEventListener('click',loadOrders);$('orderRows').addEventListener('click',async e=>{const confirmId=e.target.closest('[data-confirm-order]')?.dataset.confirmOrder,cancelId=e.target.closest('[data-cancel-order]')?.dataset.cancelOrder;if(!confirmId&&!cancelId)return;const id=confirmId||cancelId;if(cancelId&&!confirm('Cancel this order and return its reserved stock to inventory?'))return;const {error}=await db.rpc(confirmId?'confirm_sivakar_order':'cancel_sivakar_order',confirmId?{p_order_id:id}:{p_order_id:id});if(error){msg('Could not update order: '+error.message);return}msg(confirmId?'Order confirmed.':'Order cancelled and stock restored.',true);await Promise.all([loadOrders(),loadProducts()])});
+
+/* Excel import: insert-only, with duplicate checks */
+let excelImportData = [];
+let excelImportHeaders = [];
+let excelImportPreview = [];
+
+const excelFields = [
+  { key: 'name', label: 'Product name', required: true,
+    aliases: ['name', 'product name', 'item name', 'product', 'item'] },
+  { key: 'description', label: 'Description',
+    aliases: ['description', 'details', 'product description'] },
+  { key: 'category', label: 'Category', required: true,
+    aliases: ['category', 'product category'] },
+  { key: 'product_type', label: 'Product type',
+    aliases: ['product type', 'type'] },
+  { key: 'selling_unit', label: 'Selling unit', required: true,
+    aliases: ['selling unit', 'unit', 'unit of sale'] },
+  { key: 'stock_quantity', label: 'Boxes / stock quantity', required: true,
+    aliases: ['boxes', 'stock quantity', 'stock', 'quantity', 'available quantity'] },
+  { key: 'pieces_per_box', label: 'Pieces per box',
+    aliases: ['pieces per box', 'units per box', 'unit per box'] },
+  { key: 'actual_price', label: 'Actual price', required: true,
+    aliases: ['actual price', 'box actual price', 'mrp', 'price'] },
+  { key: 'discount_percent', label: 'Discount percentage',
+    aliases: ['discount percent', 'discount percentage', 'discount'] },
+  { key: 'display_order', label: 'Display order',
+    aliases: ['display order', 'sort order', 'order'] },
+  { key: 'cost_per_selling_unit', label: 'Private cost per selling unit',
+    aliases: ['cost per selling unit', 'cost price', 'unit cost', 'cost'] }
+];
+
+const normalizeExcelText = value =>
+  String(value ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+
+function excelEscape(value) {
+  return esc(value);
+}
+
+function excelReadNumber(value, fallback = 0) {
+  if (value === null || value === undefined || String(value).trim() === '') {
+    return fallback;
+  }
+  const n = Number(String(value).replace(/[₹,\s]/g, ''));
+  return Number.isFinite(n) ? n : NaN;
+}
+
+function excelAutoMatch(field, headers) {
+  const aliases = [field.key.replaceAll('_', ' '), ...field.aliases]
+    .map(normalizeExcelText);
+
+  return headers.findIndex(header =>
+    aliases.includes(normalizeExcelText(header))
+  );
+}
+
+function excelShowPanel(show) {
+  $('excelImportPanel').classList.toggle('hidden', !show);
+  if (!show) {
+    excelImportData = [];
+    excelImportHeaders = [];
+    excelImportPreview = [];
+    $('excelPreviewArea').classList.add('hidden');
+    $('excelMappingFields').innerHTML = '';
+    $('excelFileInfo').textContent = '';
+    $('excelFile').value = '';
+    $('confirmExcelImportBtn').disabled = true;
+  }
+}
+
+$('importProductsBtn').addEventListener('click', () => {
+  if (!db || !currentUser) {
+    msg('Please sign in as an authorized admin first.');
+    return;
+  }
+  $('excelFile').click();
+});
+
+$('cancelExcelBtn').addEventListener('click', () => {
+  excelShowPanel(false);
+});
+
+$('excelFile').addEventListener('change', async event => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  try {
+    if (!window.XLSX) {
+      throw new Error('Excel reader did not load. Refresh the page and try again.');
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      throw new Error('Please use a file smaller than 10 MB.');
+    }
+
+    const buffer = await file.arrayBuffer();
+    const workbook = XLSX.read(buffer, { type: 'array' });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const matrix = XLSX.utils.sheet_to_json(sheet, {
+      header: 1,
+      defval: '',
+      raw: false
+    });
+
+    if (!matrix.length || !matrix[0].some(v => String(v).trim())) {
+      throw new Error('The first worksheet has no header row.');
+    }
+
+    excelImportHeaders = matrix[0].map((v, i) =>
+      String(v ?? '').trim() || `Column ${i + 1}`
+    );
+
+    excelImportData = matrix.slice(1)
+      .filter(row => row.some(v => String(v ?? '').trim()))
+      .map(row => Object.fromEntries(
+        excelImportHeaders.map((header, i) => [header, row[i] ?? ''])
+      ));
+
+    if (!excelImportData.length) {
+      throw new Error('No product rows were found below the header row.');
+    }
+
+    excelShowPanel(true);
+    $('excelFileInfo').textContent =
+      `${file.name} · ${excelImportData.length} data rows · ` +
+      `${excelImportHeaders.length} columns`;
+
+    $('excelMappingFields').innerHTML = excelFields.map(field => {
+      const matchedIndex = excelAutoMatch(field, excelImportHeaders);
+      const options = [
+        `<option value="">— Skip this field —</option>`,
+        ...excelImportHeaders.map((header, i) =>
+          `<option value="${i}" ${i === matchedIndex ? 'selected' : ''}>` +
+          `${excelEscape(header)}</option>`
+        )
+      ].join('');
+
+      return `<div class="field" style="margin:10px 0">
+        <label for="excelMap_${field.key}">${excelEscape(field.label)}` +
+        `${field.required ? ' *' : ''}</label>
+        <select id="excelMap_${field.key}" data-excel-field="${field.key}">` +
+        `${options}</select></div>`;
+    }).join('');
+
+    $('excelPreviewArea').classList.add('hidden');
+    $('confirmExcelImportBtn').disabled = true;
+  } catch (error) {
+    excelShowPanel(false);
+    msg('Could not read Excel file: ' + (error.message || String(error)));
+  }
+});
+
+function excelMappedRow(source) {
+  const output = {};
+
+  for (const field of excelFields) {
+    const select = $('excelMap_' + field.key);
+    const index = select?.value;
+
+    output[field.key] = index === '' || index === undefined
+      ? ''
+      : source[excelImportHeaders[Number(index)]] ?? '';
+  }
+
+  return output;
+}
+
+$('previewExcelBtn').addEventListener('click', () => {
+  if (!excelImportData.length) {
+    msg('Please select an Excel file first.');
+    return;
+  }
+
+  const mappedKeys = excelFields.filter(field =>
+    $('excelMap_' + field.key)?.value !== ''
+  ).map(field => field.key);
+
+  const missingMapping = excelFields.find(field =>
+    field.required && !mappedKeys.includes(field.key)
+  );
+
+  if (missingMapping) {
+    msg('Please map the required field: ' + missingMapping.label);
+    return;
+  }
+
+  const existingNames = new Set(
+    allProducts.map(p => normalizeExcelText(p.name))
+  );
+  const fileNames = new Set();
+
+  excelImportPreview = excelImportData.map((source, index) => {
+    const row = excelMappedRow(source);
+    const name = String(row.name ?? '').trim();
+    const categoryText = String(row.category ?? '')
+  .trim()
+  .toLowerCase()
+  .replace(/[\s-]+/g, '_');
+
+const category = ['standard', 'non_standard'].includes(categoryText)
+  ? categoryText
+  : '';
+
+const unitText = String(row.selling_unit ?? '')
+  .trim()
+  .toLowerCase();
+
+const unitMap = {
+  box: 'box',
+  boxes: 'box',
+  piece: 'piece',
+  pieces: 'piece',
+  packet: 'packet',
+  packets: 'packet',
+  pkt: 'packet',
+  bag: 'bag',
+  bags: 'bag'
+};
+
+const unit = unitMap[unitText] || '';
+
+    const stock = excelReadNumber(row.stock_quantity, 0);
+    const pieces = excelReadNumber(row.pieces_per_box, 1);
+    const price = excelReadNumber(row.actual_price, 0);
+    const discount = excelReadNumber(row.discount_percent, 0);
+    const cost = excelReadNumber(row.cost_per_selling_unit, 0);
+    const order = excelReadNumber(row.display_order, index + 1);
+
+    let issue = '';
+
+    if (!name) issue = 'Missing product name';
+    else if (!category) issue = 'Missing category';
+    else if (!unit) issue = 'Missing selling unit';
+    else if (!Number.isFinite(stock) || stock < 0 ||
+             !Number.isInteger(stock)) issue = 'Invalid stock quantity';
+    else if (!Number.isFinite(pieces) || pieces < 1 ||
+             !Number.isInteger(pieces)) issue = 'Invalid pieces per box';
+    else if (!Number.isFinite(price) || price < 0) issue = 'Invalid actual price';
+    else if (!Number.isFinite(discount) || discount < 0 ||
+             discount > 100) issue = 'Discount must be 0–100';
+    else if (!Number.isFinite(cost) || cost < 0) issue = 'Invalid private cost';
+    else if (!Number.isFinite(order)) issue = 'Invalid display order';
+
+    const normalizedName = normalizeExcelText(name);
+    let duplicate = false;
+
+    if (!issue && existingNames.has(normalizedName)) {
+      issue = 'Possible existing product — skipped';
+      duplicate = true;
+    } else if (!issue && fileNames.has(normalizedName)) {
+      issue = 'Duplicate name in this Excel file — skipped';
+      duplicate = true;
+    }
+
+    if (normalizedName) fileNames.add(normalizedName);
+
+    return {
+      name,
+      description: String(row.description ?? '').trim(),
+      category,
+      product_type: String(row.product_type ?? '').trim(),
+      selling_unit: unit,
+      stock_quantity: stock,
+      pieces_per_box: pieces,
+      actual_price: price,
+      discount_percent: discount,
+      display_order: order,
+      cost_per_selling_unit: cost,
+      issue,
+      duplicate,
+      sourceIndex: index
+    };
+  });
+
+  const ready = excelImportPreview.filter(row => !row.issue);
+  const skipped = excelImportPreview.length - ready.length;
+
+  $('excelPreviewSummary').textContent =
+    `${ready.length} ready to import · ${skipped} rows need correction ` +
+    `or will be skipped. Existing products will not be updated.`;
+
+  $('excelPreviewRows').innerHTML = excelImportPreview.map(row =>
+    `<tr>
+      <td>${excelEscape(row.name || '—')}</td>
+      <td>${excelEscape(row.category || '—')}</td>
+      <td>${excelEscape(row.stock_quantity)}</td>
+      <td>${money(Number.isFinite(row.actual_price) ? row.actual_price : 0)}</td>
+      <td>${money(Number.isFinite(row.cost_per_selling_unit)
+        ? row.cost_per_selling_unit : 0)}</td>
+      <td>${excelEscape(row.issue || 'Ready')}</td>
+    </tr>`
+  ).join('');
+
+  $('excelPreviewArea').classList.remove('hidden');
+  $('confirmExcelImportBtn').disabled = ready.length === 0;
+  hideMsg();
+});
+
+$('confirmExcelImportBtn').addEventListener('click', async () => {
+  if (!db || !currentUser || !excelImportPreview.length) return;
+
+  const btn = $('confirmExcelImportBtn');
+  const ready = excelImportPreview.filter(row => !row.issue);
+
+  if (!ready.length) {
+    msg('There are no valid new products to import.');
+    return;
+  }
+
+  const answer = confirm(
+    `Import ${ready.length} new product(s)?\n\n` +
+    'Existing products will not be updated or deleted. ' +
+    'New products will be hidden from customers until reviewed.'
+  );
+  if (!answer) return;
+
+  btn.disabled = true;
+  btn.textContent = 'Importing…';
+
+  let added = 0;
+  let failed = 0;
+  const errors = [];
+
+  try {
+    for (const row of ready) {
+      const id = crypto.randomUUID();
+
+      // Recheck existing names immediately before inserting.
+      const { data: sameName, error: checkError } = await db
+        .from('products')
+        .select('id')
+        .ilike('name', row.name)
+        .limit(1);
+
+      if (checkError) {
+        failed++;
+        errors.push(`${row.name}: duplicate check failed`);
+        continue;
+      }
+
+      if (sameName?.length) {
+        failed++;
+        errors.push(`${row.name}: product already exists`);
+        continue;
+      }
+
+      const product = {
+        id,
+        name: row.name,
+        description: row.description,
+        category: row.category,
+        product_type: row.product_type,
+        selling_unit: row.selling_unit,
+        stock_quantity: row.stock_quantity,
+        pieces_per_box: row.pieces_per_box,
+        actual_price: row.actual_price,
+        discount_percent: row.discount_percent,
+        image_url: '',
+        video_url: '',
+        is_published: false,
+        display_order: row.display_order
+      };
+
+      const { error: productError } = await db
+        .from('products')
+        .insert(product);
+
+      if (productError) {
+        failed++;
+        errors.push(`${row.name}: ${productError.message}`);
+        continue;
+      }
+
+      // Keep private cost in its existing, separate table.
+      const { error: costError } = await db
+        .from('product_costs')
+        .insert({
+          product_id: id,
+          cost_per_selling_unit: row.cost_per_selling_unit
+        });
+
+      if (costError) {
+        // Do not delete the successfully created product automatically.
+        failed++;
+        errors.push(
+          `${row.name}: product added, but private cost could not be saved. ` +
+          'Check product_costs before retrying.'
+        );
+        continue;
+      }
+
+      added++;
+    }
+
+    await loadProducts();
+
+    msg(
+      `Import finished. Added: ${added}. Failed or needing attention: ${failed}.` +
+      (errors.length ? ' First issue: ' + errors[0] : ''),
+      failed === 0
+    );
+
+    if (failed === 0) excelShowPanel(false);
+  } catch (error) {
+    msg('Import stopped: ' + (error.message || String(error)));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Import New Products';
+  }
+});
 init();
 </script></body></html>
