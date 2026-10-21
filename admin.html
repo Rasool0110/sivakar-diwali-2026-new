@@ -471,10 +471,9 @@ $('offlineSaleForm').addEventListener('submit', async e => {
   }
 
   if (!offlineItems.length) {
-    msg('Please add at least one product.');
-    return;
-  }
-
+  msg('No products detected at submit. Items in memory: ' + offlineItems.length);
+  return;
+}
   const finalPrice = Number($('offlineFinalPrice').value);
   const expenses = Number($('offlineExtraExpenses').value || 0);
   const received = Number($('offlineAmountReceived').value || 0);
