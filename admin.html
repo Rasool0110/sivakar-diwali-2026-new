@@ -313,22 +313,87 @@ async function loadOrders() {
             ${o.is_test ? '<span class="sub">TEST ORDER</span>' : ''}
           </td>
 
-          <td>
-            <div class="top-actions">
-              ${o.status === 'pending_confirmation'
-                ? `<button class="btn secondary" data-confirm-order="${o.id}">Confirm</button>`
-                : ''}
-              ${o.status !== 'cancelled'
-                ? `<button class="btn danger" data-cancel-order="${o.id}">Cancel & restore stock</button>`
-                : ''}
-            </div>
-          </td>
+          
+<td>
+  <div class="top-actions">
+    ${o.status === 'pending_confirmation'
+      ? `<button class="btn secondary" data-confirm-order="${o.id}">Confirm</button>`
+      : ''}
+    ${o.status !== 'cancelled'
+      ? `<button class="btn danger" data-cancel-order="${o.id}">Cancel & restore stock</button>`
+      : ''}
+    <button class="btn danger" data-delete-order="${o.id}">Delete</button>
+  </div>
+</td>
+
         </tr>`;
       }).join('')
     : '<tr><td colspan="7">No orders yet.</td></tr>';
 }
 
-$('refreshOrders').addEventListener('click',loadOrders);$('orderRows').addEventListener('click',async e=>{const confirmId=e.target.closest('[data-confirm-order]')?.dataset.confirmOrder,cancelId=e.target.closest('[data-cancel-order]')?.dataset.cancelOrder;if(!confirmId&&!cancelId)return;const id=confirmId||cancelId;if(cancelId&&!confirm('Cancel this order and return its reserved stock to inventory?'))return;const {error}=await db.rpc(confirmId?'confirm_sivakar_order':'cancel_sivakar_order',confirmId?{p_order_id:id}:{p_order_id:id});if(error){msg('Could not update order: '+error.message);return}msg(confirmId?'Order confirmed.':'Order cancelled and stock restored.',true);await Promise.all([loadOrders(),loadProducts()])});
+$('refreshOrders').addEventListener('click',loadOrders);
+$('orderRows').addEventListener('click', async e => {
+  const deleteButton = e.target.closest('[data-delete-order]');
+  const confirmId = e.target.closest('[data-confirm-order]')?.dataset.confirmOrder;
+  const cancelId = e.target.closest('[data-cancel-order]')?.dataset.cancelOrder;
+
+  // Delete an order
+  if (deleteButton) {
+    const id = deleteButton.dataset.deleteOrder;
+
+    if (!confirm('Permanently delete this order and its order items? Stock quantities will not change.')) {
+      return;
+    }
+
+    deleteButton.disabled = true;
+
+    const { error } = await db.rpc('delete_sivakar_test_order', {
+      p_order_id: id
+    });
+
+    if (error) {
+      deleteButton.disabled = false;
+      msg('Could not delete order: ' + error.message);
+      return;
+    }
+
+    msg('Order deleted successfully.', true);
+    await loadOrders();
+    return;
+  }
+
+  // Existing Confirm and Cancel actions
+  if (!confirmId && !cancelId) return;
+
+  const id = confirmId || cancelId;
+
+  if (
+    cancelId &&
+    !confirm('Cancel this order and return its reserved stock to inventory?')
+  ) {
+    return;
+  }
+
+  const { error } = await db.rpc(
+    confirmId ? 'confirm_sivakar_order' : 'cancel_sivakar_order',
+    { p_order_id: id }
+  );
+
+  if (error) {
+    msg('Could not update order: ' + error.message);
+    return;
+  }
+
+  msg(
+    confirmId
+      ? 'Order confirmed.'
+      : 'Order cancelled and stock restored.',
+    true
+  );
+
+  await Promise.all([loadOrders(), loadProducts()]);
+});
+
 
 /* Offline sales: catalogue, totals and order creation */
 let offlineItems = [];
