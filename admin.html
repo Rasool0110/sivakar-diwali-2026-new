@@ -87,7 +87,109 @@
       </button>
     </div>
   </div>
-</div><div class="table-wrap"><table><thead><tr><th>Photo</th><th>Product</th><th>Stock / internal units</th><th>Price / margin</th><th>Visibility</th><th>Actions</th></tr></thead><tbody id="productRows"></tbody></table></div><p class="note">Internal units = stock quantity × pieces per box for box products; for other selling units, internal units equal stock quantity. Margin shown here is estimated using discounted selling price minus cost, before shop overheads.</p></section><section id="ordersPanel" class="panel hidden"><h2>Customer orders <span id="orderCount" class="note"></span></h2><p class="note">Stock is deducted when an order request is recorded. Confirm only after the customer contacts you. Cancelling a pending/confirmed order restores its reserved quantities; do not cancel an order if you already fulfilled it without checking inventory.</p><div class="table-wrap"><table><thead><tr><th>Reference / date</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead><tbody id="orderRows"></tbody></table></div><div class="actions"><button id="refreshOrders" class="btn secondary" type="button">Refresh orders</button></div></section><section class="panel"><h2>Important</h2><p class="note">Do not add your Supabase service-role key to this website. Order requests are stored in Supabase and stock is reserved atomically before WhatsApp opens. The customer must still press Send in WhatsApp. Orders remain pending until you confirm them. Cancelling an order restores stock. No online payment is taken.</p></section></div>
+</div><div class="table-wrap"><table><thead><tr><th>Photo</th><th>Product</th><th>Stock / internal units</th><th>Price / margin</th><th>Visibility</th><th>Actions</th></tr></thead><tbody id="productRows"></tbody></table></div><p class="note">Internal units = stock quantity × pieces per box for box products; for other selling units, internal units equal stock quantity. Margin shown here is estimated using discounted selling price minus cost, before shop overheads.</p></section>
+<section id="offlineSalePanel" class="panel hidden">
+  <h2>Record offline sale</h2>
+  <p class="note">Use this for shop-counter sales. Products are selected from the existing catalogue and stock is deducted when the sale is saved.</p>
+
+  <form id="offlineSaleForm">
+    <div class="form-grid">
+      <label>Customer name
+        <input id="offlineCustomerName" required minlength="2" placeholder="Customer name">
+      </label>
+
+      <label>Mobile number
+        <input id="offlineCustomerMobile" required minlength="8" placeholder="Mobile number">
+      </label>
+
+      <label>Delivery address / sale location
+        <input id="offlineCustomerAddress" required minlength="5" placeholder="Shop counter / delivery address">
+      </label>
+
+      <label>Payment method
+        <select id="offlinePaymentMethod" required>
+          <option value="">Select payment method</option>
+          <option value="Cash">Cash</option>
+          <option value="UPI">UPI</option>
+          <option value="Bank transfer">Bank transfer</option>
+          <option value="Mixed">Mixed</option>
+          <option value="Credit">Credit / unpaid</option>
+        </select>
+      </label>
+    </div>
+
+    <hr>
+
+    <h3>Add products</h3>
+    <div class="form-grid">
+      <label>Product
+        <select id="offlineProductSelect" required>
+          <option value="">Select a product</option>
+        </select>
+      </label>
+
+      <label>Quantity
+        <input id="offlineProductQuantity" type="number" min="1" step="1" value="1" required>
+      </label>
+    </div>
+
+    <div class="actions">
+      <button id="addOfflineItem" class="btn secondary" type="button">Add product</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>Catalogue price</th>
+            <th>Line total</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="offlineItemRows">
+          <tr><td colspan="5">No products added yet.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="form-grid">
+      <label>Catalogue total (₹)
+        <input id="offlineCatalogTotal" type="number" readonly value="0">
+      </label>
+
+      <label>Final negotiated sale price (₹)
+        <input id="offlineFinalPrice" type="number" min="0" step="0.01" required placeholder="Enter final price">
+      </label>
+
+      <label>Extra expenses (₹)
+        <input id="offlineExtraExpenses" type="number" min="0" step="0.01" value="0" required>
+      </label>
+
+      <label>Amount received (₹)
+        <input id="offlineAmountReceived" type="number" min="0" step="0.01" value="0" required>
+      </label>
+    </div>
+
+    <p><strong>Balance due:</strong> ₹<span id="offlineBalanceDue">0.00</span></p>
+
+    <label>Notes
+      <textarea id="offlineSaleNotes" rows="3" placeholder="Optional notes"></textarea>
+    </label>
+
+    <label>
+      <input id="offlineIsTest" type="checkbox">
+      Mark as test order (not a real sale)
+    </label>
+
+    <div class="actions">
+      <button id="saveOfflineSale" class="btn" type="submit">Save offline sale</button>
+      <button id="resetOfflineSale" class="btn secondary" type="button">Clear form</button>
+    </div>
+  </form>
+</section>
+<section id="ordersPanel" class="panel hidden"><h2>Customer orders <span id="orderCount" class="note"></span></h2><p class="note">Stock is deducted when an order request is recorded. Confirm only after the customer contacts you. Cancelling a pending/confirmed order restores its reserved quantities; do not cancel an order if you already fulfilled it without checking inventory.</p><div class="table-wrap"><table><thead><tr><th>Reference / date</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead><tbody id="orderRows"></tbody></table></div><div class="actions"><button id="refreshOrders" class="btn secondary" type="button">Refresh orders</button></div></section><section class="panel"><h2>Important</h2><p class="note">Do not add your Supabase service-role key to this website. Order requests are stored in Supabase and stock is reserved atomically before WhatsApp opens. The customer must still press Send in WhatsApp. Orders remain pending until you confirm them. Cancelling an order restores stock. No online payment is taken.</p></section></div>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script>
 const cfg=window.SIVAKAR_CONFIG||{},bucket='sivakar-product-media';let db=null,allProducts=[],currentUser=null;const $=id=>document.getElementById(id);const money=n=>'₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2});function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function configured(){return cfg.SUPABASE_URL&&cfg.SUPABASE_ANON_KEY&&!cfg.SUPABASE_URL.includes('PASTE_')&&!cfg.SUPABASE_ANON_KEY.includes('PASTE_')}function msg(t,ok=false){$('message').textContent=t;$('message').classList.toggle('ok',ok);$('message').classList.remove('hidden')}function hideMsg(){$('message').classList.add('hidden')}function showApp(on){$('loginPanel').classList.toggle('hidden',on);$('editorPanel').classList.toggle('hidden',!on);$('listPanel').classList.toggle('hidden',!on);$('ordersPanel').classList.toggle('hidden',!on);$('signOut').classList.toggle('hidden',!on)}function salePrice(p){return Number(p.actual_price||0)*(1-Number(p.discount_percent||0)/100)}function internal(p){return Number(p.stock_quantity||0)*(p.selling_unit==='box'?Number(p.pieces_per_box||1):1)}function updateCalc(){const actual=Number($('actualPrice').value||0),d=Number($('discountPercent').value||0),stock=Number($('stockQuantity').value||0),pieces=Number($('piecesPerBox').value||1),cost=Number($('costPrice').value||0),unit=$('sellingUnit').value,discounted=actual*(1-d/100),units=stock*(unit==='box'?pieces:1);$('calculation').textContent=`Discounted price per selling unit: ${money(discounted)} · Internal units: ${units} · Estimated margin per unit: ${money(discounted-cost)} · Potential margin for all stock: ${money((discounted-cost)*stock)} (before overheads)`}['actualPrice','discountPercent','stockQuantity','piecesPerBox','costPrice','sellingUnit'].forEach(id=>$(id).addEventListener('input',updateCalc));
 async function init(){if(!configured()){showApp(false);msg('Setup required: put your NEW Supabase project URL and anon key in supabase-config.js. Follow README.md to set up admin access.');return}db=supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY);const {data:{session}}=await db.auth.getSession();if(session){currentUser=session.user;await verifyAdmin()}else showApp(false);db.auth.onAuthStateChange(async(_event,session)=>{currentUser=session?.user||null;if(currentUser)await verifyAdmin();else showApp(false)})}async function verifyAdmin(){const {data,error}=await db.from('app_admins').select('user_id').eq('user_id',currentUser.id).maybeSingle();if(error||!data){showApp(false);msg('Signed in but not authorized. Add this user UUID to public.app_admins in your NEW project.');return}showApp(true);hideMsg();await loadProducts();await loadOrders()}$('loginForm').addEventListener('submit',async e=>{e.preventDefault();if(!db)return;const b=e.submitter;b.disabled=true;const {error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});b.disabled=false;if(error)msg('Sign-in failed: '+error.message)});$('signOut').addEventListener('click',async()=>{await db.auth.signOut();showApp(false);msg('Signed out.')});
