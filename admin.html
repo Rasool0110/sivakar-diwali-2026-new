@@ -470,8 +470,19 @@ $('offlineSaleForm').addEventListener('submit', async e => {
     return;
   }
 
-  if (!offlineItems.length) {
-  msg('No products detected at submit. Items in memory: ' + offlineItems.length);
+  if (!Array.isArray(offlineItems) || offlineItems.length === 0) {
+  msg('Please click "Add product" and confirm the product appears in Order Items.');
+  return;
+}
+
+const invalidItems = offlineItems.some(item =>
+  !item.productId ||
+  !Number.isInteger(Number(item.quantity)) ||
+  Number(item.quantity) < 1
+);
+
+if (invalidItems) {
+  msg('One or more order items are invalid. Remove them and add the products again.');
   return;
 }
   const finalPrice = Number($('offlineFinalPrice').value);
