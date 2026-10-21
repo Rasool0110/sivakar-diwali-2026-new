@@ -189,7 +189,7 @@
     </div>
   </form>
 </section>
-<section id="ordersPanel" class="panel hidden"><h2>Customer orders <span id="orderCount" class="note"></span></h2><p class="note">Stock is deducted when an order request is recorded. Confirm only after the customer contacts you. Cancelling a pending/confirmed order restores its reserved quantities; do not cancel an order if you already fulfilled it without checking inventory.</p><div class="table-wrap"><table><thead><tr><th>Reference / date</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead><tbody id="orderRows"></tbody></table></div><div class="actions"><button id="refreshOrders" class="btn secondary" type="button">Refresh orders</button></div></section><section class="panel"><h2>Important</h2><p class="note">Do not add your Supabase service-role key to this website. Order requests are stored in Supabase and stock is reserved atomically before WhatsApp opens. The customer must still press Send in WhatsApp. Orders remain pending until you confirm them. Cancelling an order restores stock. No online payment is taken.</p></section></div>
+<section id="ordersPanel" class="panel hidden"><h2>Customer orders <span id="orderCount" class="note"></span></h2><p class="note">Stock is deducted when an order request is recorded. Confirm only after the customer contacts you. Cancelling a pending/confirmed order restores its reserved quantities; do not cancel an order if you already fulfilled it without checking inventory.</p><div class="table-wrap"><table><thead><tr><th>Reference / date</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead><tbody id="orderRows"></tbody></table></div><div class="actions"><button id="refreshOrders" class="btn secondary" type="button">Refresh orders</button><button id="showOfflineSale" class="btn" type="button">+ Record offline sale</button></div></section><section class="panel"><h2>Important</h2><p class="note">Do not add your Supabase service-role key to this website. Order requests are stored in Supabase and stock is reserved atomically before WhatsApp opens. The customer must still press Send in WhatsApp. Orders remain pending until you confirm them. Cancelling an order restores stock. No online payment is taken.</p></section></div>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js"></script><script>
 const cfg=window.SIVAKAR_CONFIG||{},bucket='sivakar-product-media';let db=null,allProducts=[],currentUser=null;const $=id=>document.getElementById(id);const money=n=>'₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2});function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function configured(){return cfg.SUPABASE_URL&&cfg.SUPABASE_ANON_KEY&&!cfg.SUPABASE_URL.includes('PASTE_')&&!cfg.SUPABASE_ANON_KEY.includes('PASTE_')}function msg(t,ok=false){$('message').textContent=t;$('message').classList.toggle('ok',ok);$('message').classList.remove('hidden')}function hideMsg(){$('message').classList.add('hidden')}function showApp(on){$('loginPanel').classList.toggle('hidden',on);$('editorPanel').classList.toggle('hidden',!on);$('listPanel').classList.toggle('hidden',!on);$('ordersPanel').classList.toggle('hidden',!on);$('signOut').classList.toggle('hidden',!on)}function salePrice(p){return Number(p.actual_price||0)*(1-Number(p.discount_percent||0)/100)}function internal(p){return Number(p.stock_quantity||0)*(p.selling_unit==='box'?Number(p.pieces_per_box||1):1)}function updateCalc(){const actual=Number($('actualPrice').value||0),d=Number($('discountPercent').value||0),stock=Number($('stockQuantity').value||0),pieces=Number($('piecesPerBox').value||1),cost=Number($('costPrice').value||0),unit=$('sellingUnit').value,discounted=actual*(1-d/100),units=stock*(unit==='box'?pieces:1);$('calculation').textContent=`Discounted price per selling unit: ${money(discounted)} · Internal units: ${units} · Estimated margin per unit: ${money(discounted-cost)} · Potential margin for all stock: ${money((discounted-cost)*stock)} (before overheads)`}['actualPrice','discountPercent','stockQuantity','piecesPerBox','costPrice','sellingUnit'].forEach(id=>$(id).addEventListener('input',updateCalc));
 async function init(){if(!configured()){showApp(false);msg('Setup required: put your NEW Supabase project URL and anon key in supabase-config.js. Follow README.md to set up admin access.');return}db=supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY);const {data:{session}}=await db.auth.getSession();if(session){currentUser=session.user;await verifyAdmin()}else showApp(false);db.auth.onAuthStateChange(async(_event,session)=>{currentUser=session?.user||null;if(currentUser)await verifyAdmin();else showApp(false)})}async function verifyAdmin(){const {data,error}=await db.from('app_admins').select('user_id').eq('user_id',currentUser.id).maybeSingle();if(error||!data){showApp(false);msg('Signed in but not authorized. Add this user UUID to public.app_admins in your NEW project.');return}showApp(true);hideMsg();await loadProducts();await loadOrders()}$('loginForm').addEventListener('submit',async e=>{e.preventDefault();if(!db)return;const b=e.submitter;b.disabled=true;const {error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});b.disabled=false;if(error)msg('Sign-in failed: '+error.message)});$('signOut').addEventListener('click',async()=>{await db.auth.signOut();showApp(false);msg('Signed out.')});
@@ -202,6 +202,222 @@ $('productForm').addEventListener('submit',async e=>{e.preventDefault();if(!db||
   selling_unit:$('sellingUnit').value,stock_quantity:Math.max(0,Math.floor(Number($('stockQuantity').value)||0)),pieces_per_box:Math.max(1,Math.floor(Number($('piecesPerBox').value)||1)),actual_price:Math.max(0,Number($('actualPrice').value)||0),discount_percent:Math.min(100,Math.max(0,Number($('discountPercent').value)||0)),image_url,video_url,is_published:$('published').value==='true',display_order:Number($('displayOrder').value)||0};let result;if(existing)result=await db.from('products').update(row).eq('id',id);else result=await db.from('products').insert({...row,id});if(result.error)throw result.error;const costRow={product_id:id,cost_per_selling_unit:Math.max(0,Number($('costPrice').value)||0)};const costResult=await db.from('product_costs').upsert(costRow,{onConflict:'product_id'});if(costResult.error)throw costResult.error;msg(existing?'Product updated successfully.':'Product added successfully.',true);resetForm();await loadProducts()}catch(err){msg('Could not save product: '+(err.message||String(err)))}finally{btn.disabled=false;btn.textContent='Save product'}});
 async function loadProducts(){const {data,error}=await db.from('products').select('*').order('display_order').order('name');if(error){msg('Unable to load products: '+error.message);return}allProducts=data||[];const {data:costs,error:costError}=await db.from('product_costs').select('*');if(costError){msg('Products loaded but private cost data could not be loaded: '+costError.message);return}const byId=Object.fromEntries((costs||[]).map(c=>[c.product_id,c.cost_per_selling_unit]));allProducts.forEach(p=>p.cost_per_selling_unit=Number(byId[p.id]||0));renderRows()}function renderRows(){const q=$('adminSearch').value.trim().toLowerCase(),list=allProducts.filter(p=>p.name.toLowerCase().includes(q));$('productCount').textContent=`· ${allProducts.length} total · ${allProducts.filter(p=>p.is_published).length} published`;$('productRows').innerHTML=list.length?list.map(p=>`<tr><td>${p.image_url?`<img src="${esc(p.image_url)}" alt="">`:'—'}</td><td><strong>${esc(p.name)}</strong><span class="sub">${p.category==='standard'?'Standard':'Non-standard'} · ${esc(p.product_type||'Other')} · ${esc(p.selling_unit)}</span></td><td>${p.stock_quantity} ${p.selling_unit}(s)<span class="sub">Internal units: ${internal(p)}</span></td><td>${money(p.actual_price)}<span class="sub">${p.discount_percent}% off · sale ${money(salePrice(p))}</span><span class="sub">Cost ${money(p.cost_per_selling_unit)} · margin ${money(salePrice(p)-p.cost_per_selling_unit)}/unit</span></td><td><span class="status-pill ${p.is_published?'':'off'}">${p.is_published?'Published':'Hidden'}</span></td><td><div class="top-actions"><button class="btn secondary" data-edit="${p.id}">Edit</button><button class="btn secondary" data-toggle="${p.id}">${p.is_published?'Hide':'Publish'}</button><button class="btn danger" data-delete="${p.id}">Delete</button></div></td></tr>`).join(''):'<tr><td colspan="6">No products found. Add your first product above.</td></tr>'}$('adminSearch').addEventListener('input',renderRows);$('productRows').addEventListener('click',async e=>{const edit=e.target.closest('[data-edit]')?.dataset.edit,toggle=e.target.closest('[data-toggle]')?.dataset.toggle,del=e.target.closest('[data-delete]')?.dataset.delete;if(edit){const p=allProducts.find(x=>x.id===edit);if(!p)return;$('productId').value=p.id;for(const [id,key] of [['name','name'],['description','description'],['category','category'],['productType','product_type'],['sellingUnit','selling_unit'],['stockQuantity','stock_quantity'],['piecesPerBox','pieces_per_box'],['actualPrice','actual_price'],['discountPercent','discount_percent'],['displayOrder','display_order']])$(id).value=p[key]??'';$('costPrice').value=p.cost_per_selling_unit||0;$('published').value=String(p.is_published);$('formTitle').textContent='Edit product';$('saveBtn').textContent='Update product';if(p.image_url){$('imagePreview').src=p.image_url;$('imagePreview').style.display='block'}else $('imagePreview').style.display='none';if(p.video_url){$('videoPreview').src=p.video_url;$('videoPreview').style.display='block'}else $('videoPreview').style.display='none';$('imageFile').value='';$('videoFile').value='';updateCalc();$('editorPanel').scrollIntoView({behavior:'smooth',block:'start'})}else if(toggle){const p=allProducts.find(x=>x.id===toggle);const {error}=await db.from('products').update({is_published:!p.is_published}).eq('id',toggle);if(error)msg('Could not change visibility: '+error.message);else{msg(p.is_published?'Product hidden from customers.':'Product published to customers.',true);await loadProducts()}}else if(del){const p=allProducts.find(x=>x.id===del);if(!confirm(`Permanently delete “${p.name}”? Hiding is safer if you may need it later.`))return;const {error}=await db.from('products').delete().eq('id',del);if(error)msg('Could not delete product: '+error.message);else{msg('Product deleted.',true);await loadProducts()}}});async function loadOrders(){if(!db||!currentUser)return;const {data,error}=await db.from('orders').select('id,reference,customer_name,customer_mobile,delivery_address,status,total,created_at,order_items(product_name,selling_unit,quantity,unit_price,line_total)').order('created_at',{ascending:false}).limit(100);if(error){msg('Products loaded, but orders could not be loaded: '+error.message);return}const rows=data||[];$('orderCount').textContent=`· ${rows.length} latest orders`;$('orderRows').innerHTML=rows.length?rows.map(o=>{const items=(o.order_items||[]).map(i=>`${esc(i.product_name)} — ${i.quantity} ${esc(i.selling_unit)} × ${money(i.unit_price)}`).join('<br>');const date=new Date(o.created_at).toLocaleString('en-IN');return `<tr><td><strong>${esc(o.reference)}</strong><span class="sub">${esc(date)}</span></td><td>${esc(o.customer_name)}<span class="sub">${esc(o.customer_mobile)}</span><span class="sub">${esc(o.delivery_address)}</span></td><td>${items||'—'}</td><td><strong>${money(o.total)}</strong></td><td><span class="status-pill ${o.status==='pending_confirmation'?'off':''}">${esc(o.status.replaceAll('_',' '))}</span></td><td><div class="top-actions">${o.status==='pending_confirmation'?`<button class="btn secondary" data-confirm-order="${o.id}">Confirm</button>`:''}${o.status!=='cancelled'?`<button class="btn danger" data-cancel-order="${o.id}">Cancel & restore stock</button>`:''}</div></td></tr>`}).join(''):'<tr><td colspan="6">No orders yet.</td></tr>'}
 $('refreshOrders').addEventListener('click',loadOrders);$('orderRows').addEventListener('click',async e=>{const confirmId=e.target.closest('[data-confirm-order]')?.dataset.confirmOrder,cancelId=e.target.closest('[data-cancel-order]')?.dataset.cancelOrder;if(!confirmId&&!cancelId)return;const id=confirmId||cancelId;if(cancelId&&!confirm('Cancel this order and return its reserved stock to inventory?'))return;const {error}=await db.rpc(confirmId?'confirm_sivakar_order':'cancel_sivakar_order',confirmId?{p_order_id:id}:{p_order_id:id});if(error){msg('Could not update order: '+error.message);return}msg(confirmId?'Order confirmed.':'Order cancelled and stock restored.',true);await Promise.all([loadOrders(),loadProducts()])});
+
+/* Offline sales: catalogue, totals and order creation */
+let offlineItems = [];
+let offlineFinalPriceTouched = false;
+
+function renderOfflineProducts() {
+  const select = $('offlineProductSelect');
+  if (!select) return;
+
+  const available = allProducts.filter(
+    p => p.is_published && Number(p.stock_quantity) > 0
+  );
+
+  select.innerHTML =
+    '<option value="">Select a product</option>' +
+    available.map(p =>
+      `<option value="${p.id}">${esc(p.name)} — ${esc(p.selling_unit)} — ${money(salePrice(p))} — Stock: ${p.stock_quantity}</option>`
+    ).join('');
+}
+
+function updateOfflineTotals() {
+  const total = offlineItems.reduce((sum, item) => {
+    const p = allProducts.find(x => x.id === item.productId);
+    return sum + (p ? salePrice(p) * item.quantity : 0);
+  }, 0);
+
+  $('offlineCatalogTotal').value = total.toFixed(2);
+
+  if (!offlineFinalPriceTouched) {
+    $('offlineFinalPrice').value = total.toFixed(2);
+  }
+
+  const finalPrice = Number($('offlineFinalPrice').value || 0);
+  const received = Number($('offlineAmountReceived').value || 0);
+
+  $('offlineBalanceDue').textContent =
+    Math.max(0, finalPrice - received).toFixed(2);
+
+  $('offlineItemRows').innerHTML = offlineItems.length
+    ? offlineItems.map(item => {
+        const p = allProducts.find(x => x.id === item.productId);
+        if (!p) return '';
+
+        const lineTotal = salePrice(p) * item.quantity;
+
+        return `<tr>
+          <td>${esc(p.name)}<span class="sub">${esc(p.selling_unit)}</span></td>
+          <td>${item.quantity}</td>
+          <td>${money(salePrice(p))}</td>
+          <td>${money(lineTotal)}</td>
+          <td><button type="button" class="btn danger"
+            data-remove-offline-item="${p.id}">Remove</button></td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="5">No products added yet.</td></tr>';
+}
+
+function resetOfflineSale() {
+  $('offlineSaleForm').reset();
+  offlineItems = [];
+  offlineFinalPriceTouched = false;
+  $('offlineCatalogTotal').value = '0.00';
+  $('offlineBalanceDue').textContent = '0.00';
+  renderOfflineProducts();
+  updateOfflineTotals();
+}
+
+$('showOfflineSale').addEventListener('click', () => {
+  renderOfflineProducts();
+  $('offlineSalePanel').classList.remove('hidden');
+  $('offlineSalePanel').scrollIntoView({
+    behavior: 'smooth',
+    block: 'start'
+  });
+});
+
+$('addOfflineItem').addEventListener('click', () => {
+  const productId = $('offlineProductSelect').value;
+  const quantity = Number($('offlineProductQuantity').value);
+  const p = allProducts.find(x => x.id === productId);
+
+  if (!p) {
+    msg('Please select a product.');
+    return;
+  }
+
+  if (!Number.isInteger(quantity) || quantity < 1) {
+    msg('Enter a valid quantity.');
+    return;
+  }
+
+  const existing = offlineItems.find(x => x.productId === productId);
+  const combinedQuantity = quantity + (existing?.quantity || 0);
+
+  if (combinedQuantity > Number(p.stock_quantity)) {
+    msg(`Only ${p.stock_quantity} ${p.selling_unit}(s) available for ${p.name}.`);
+    return;
+  }
+
+  if (existing) {
+    existing.quantity = combinedQuantity;
+  } else {
+    offlineItems.push({ productId, quantity });
+  }
+
+  $('offlineProductSelect').value = '';
+  $('offlineProductQuantity').value = '1';
+  updateOfflineTotals();
+});
+
+$('offlineItemRows').addEventListener('click', e => {
+  const button = e.target.closest('[data-remove-offline-item]');
+  if (!button) return;
+
+  offlineItems = offlineItems.filter(
+    item => item.productId !== button.dataset.removeOfflineItem
+  );
+
+  updateOfflineTotals();
+});
+
+$('offlineFinalPrice').addEventListener('input', () => {
+  offlineFinalPriceTouched = true;
+  updateOfflineTotals();
+});
+
+$('offlineAmountReceived').addEventListener('input', updateOfflineTotals);
+
+$('resetOfflineSale').addEventListener('click', () => {
+  resetOfflineSale();
+  $('offlineSalePanel').classList.add('hidden');
+});
+
+$('offlineSaleForm').addEventListener('submit', async e => {
+  e.preventDefault();
+
+  if (!db || !currentUser) {
+    msg('Please sign in to the admin panel first.');
+    return;
+  }
+
+  if (!offlineItems.length) {
+    msg('Please add at least one product.');
+    return;
+  }
+
+  const finalPrice = Number($('offlineFinalPrice').value);
+  const expenses = Number($('offlineExtraExpenses').value || 0);
+  const received = Number($('offlineAmountReceived').value || 0);
+
+  if (!Number.isFinite(finalPrice) || finalPrice < 0 ||
+      !Number.isFinite(expenses) || expenses < 0 ||
+      !Number.isFinite(received) || received < 0) {
+    msg('Check the sale price, expenses and amount received.');
+    return;
+  }
+
+  if (received > finalPrice) {
+    msg('Amount received cannot exceed the final sale price.');
+    return;
+  }
+
+  const isTest = $('offlineIsTest').checked;
+
+  if (isTest) {
+    msg('Test orders need a stock-safe database adjustment first. Leave the test checkbox unchecked for now.');
+    return;
+  }
+
+  const button = $('saveOfflineSale');
+  button.disabled = true;
+  button.textContent = 'Saving...';
+
+  try {
+    const { data, error } = await db.rpc(
+      'create_sivakar_offline_order',
+      {
+        p_customer_name: $('offlineCustomerName').value.trim(),
+        p_customer_mobile: $('offlineCustomerMobile').value.trim(),
+        p_delivery_address: $('offlineCustomerAddress').value.trim(),
+        p_items: offlineItems.map(item => ({
+          product_id: item.productId,
+          quantity: item.quantity
+        })),
+        p_final_sale_price: finalPrice,
+        p_extra_expenses: expenses,
+        p_payment_method: $('offlinePaymentMethod').value,
+        p_amount_received: received,
+        p_notes: $('offlineSaleNotes').value.trim(),
+        p_is_test: false
+      }
+    );
+
+    if (error) {
+      msg('Could not save offline sale: ' + error.message);
+      return;
+    }
+
+    msg(
+      `Offline sale ${data.reference} saved successfully.`,
+      true
+    );
+
+    resetOfflineSale();
+    $('offlineSalePanel').classList.add('hidden');
+
+    await Promise.all([loadOrders(), loadProducts()]);
+  } catch (error) {
+    msg('Unexpected error: ' + error.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Save offline sale';
+  }
+});
+
+/* End offline sales */
 
 /* Excel import: insert-only, with duplicate checks */
 let excelImportData = [];
