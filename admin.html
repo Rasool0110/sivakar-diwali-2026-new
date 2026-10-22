@@ -42,7 +42,26 @@
     hidden
   >
 </div>
-<input id="adminSearch" type="search" placeholder="Search by product name"></div><div id="excelImportPanel" class="panel hidden">
+<input id="adminSearch" type="search" placeholder="Search by product name or description">
+<div class="grid-form" style="margin-top:12px">
+  <div class="field">
+    <label for="exportCategoryFilter">Category filter</label>
+    <select id="exportCategoryFilter">
+      <option value="">All categories</option>
+      <option value="standard">Standard</option>
+      <option value="non_standard">Non-standard</option>
+    </select>
+  </div>
+  <div class="field">
+    <label for="exportProductTypeFilter">Product type filter</label>
+    <select id="exportProductTypeFilter"><option value="">All product types</option></select>
+  </div>
+</div>
+<div class="actions">
+  <button id="downloadFilteredProductsBtn" class="btn" type="button">Download filtered products (CSV for Excel)</button>
+  <button id="resetProductFiltersBtn" class="btn secondary" type="button">Reset filters</button>
+</div>
+<p class="note">The download includes matching published and hidden products, including private cost. Keep this file for internal use only and do not share it with customers.</p></div><div id="excelImportPanel" class="panel hidden">
   <h3>Import Products from Excel</h3>
   <p class="note">
     Map each Excel column to the correct field. Existing products will
@@ -212,7 +231,70 @@ $('productForm').addEventListener('submit',async e=>{e.preventDefault();if(!db||
   category:$('category').value,
   product_type:$('productType').value,
   selling_unit:$('sellingUnit').value,stock_quantity:Math.max(0,Math.floor(Number($('stockQuantity').value)||0)),pieces_per_box:Math.max(1,Math.floor(Number($('piecesPerBox').value)||1)),actual_price:Math.max(0,Number($('actualPrice').value)||0),discount_percent:Math.min(100,Math.max(0,Number($('discountPercent').value)||0)),image_url,video_url,is_published:$('published').value==='true',display_order:Number($('displayOrder').value)||0};let result;if(existing)result=await db.from('products').update(row).eq('id',id);else result=await db.from('products').insert({...row,id});if(result.error)throw result.error;const costRow={product_id:id,cost_per_selling_unit:Math.max(0,Number($('costPrice').value)||0)};const costResult=await db.from('product_costs').upsert(costRow,{onConflict:'product_id'});if(costResult.error)throw costResult.error;msg(existing?'Product updated successfully.':'Product added successfully.',true);resetForm();await loadProducts()}catch(err){msg('Could not save product: '+(err.message||String(err)))}finally{btn.disabled=false;btn.textContent='Save product'}});
-async function loadProducts(){const {data,error}=await db.from('products').select('*').order('display_order').order('name');if(error){msg('Unable to load products: '+error.message);return}allProducts=data||[];const {data:costs,error:costError}=await db.from('product_costs').select('*');if(costError){msg('Products loaded but private cost data could not be loaded: '+costError.message);return}const byId=Object.fromEntries((costs||[]).map(c=>[c.product_id,c.cost_per_selling_unit]));allProducts.forEach(p=>p.cost_per_selling_unit=Number(byId[p.id]||0));renderRows()}function renderRows(){const q=$('adminSearch').value.trim().toLowerCase(),list=allProducts.filter(p=>p.name.toLowerCase().includes(q));$('productCount').textContent=`· ${allProducts.length} total · ${allProducts.filter(p=>p.is_published).length} published`;$('productRows').innerHTML=list.length?list.map(p=>`<tr><td>${p.image_url?`<img src="${esc(p.image_url)}" alt="">`:'—'}</td><td><strong>${esc(p.name)}</strong><span class="sub">${p.category==='standard'?'Standard':'Non-standard'} · ${esc(p.product_type||'Other')} · ${esc(p.selling_unit)}</span></td><td>${p.stock_quantity} ${p.selling_unit}(s)<span class="sub">Internal units: ${internal(p)}</span></td><td>${money(p.actual_price)}<span class="sub">${p.discount_percent}% off · sale ${money(salePrice(p))}</span><span class="sub">Cost ${money(p.cost_per_selling_unit)} · margin ${money(salePrice(p)-p.cost_per_selling_unit)}/unit</span></td><td><span class="status-pill ${p.is_published?'':'off'}">${p.is_published?'Published':'Hidden'}</span></td><td><div class="top-actions"><button class="btn secondary" data-edit="${p.id}">Edit</button><button class="btn secondary" data-toggle="${p.id}">${p.is_published?'Hide':'Publish'}</button><button class="btn danger" data-delete="${p.id}">Delete</button></div></td></tr>`).join(''):'<tr><td colspan="6">No products found. Add your first product above.</td></tr>'}$('adminSearch').addEventListener('input',renderRows);$('productRows').addEventListener('click',async e=>{const edit=e.target.closest('[data-edit]')?.dataset.edit,toggle=e.target.closest('[data-toggle]')?.dataset.toggle,del=e.target.closest('[data-delete]')?.dataset.delete;if(edit){const p=allProducts.find(x=>x.id===edit);if(!p)return;$('productId').value=p.id;for(const [id,key] of [['name','name'],['description','description'],['category','category'],['productType','product_type'],['sellingUnit','selling_unit'],['stockQuantity','stock_quantity'],['piecesPerBox','pieces_per_box'],['actualPrice','actual_price'],['discountPercent','discount_percent'],['displayOrder','display_order']])$(id).value=p[key]??'';$('costPrice').value=p.cost_per_selling_unit||0;$('published').value=String(p.is_published);$('formTitle').textContent='Edit product';$('saveBtn').textContent='Update product';if(p.image_url){$('imagePreview').src=p.image_url;$('imagePreview').style.display='block'}else $('imagePreview').style.display='none';if(p.video_url){$('videoPreview').src=p.video_url;$('videoPreview').style.display='block'}else $('videoPreview').style.display='none';$('imageFile').value='';$('videoFile').value='';updateCalc();$('editorPanel').scrollIntoView({behavior:'smooth',block:'start'})}else if(toggle){const p=allProducts.find(x=>x.id===toggle);const {error}=await db.from('products').update({is_published:!p.is_published}).eq('id',toggle);if(error)msg('Could not change visibility: '+error.message);else{msg(p.is_published?'Product hidden from customers.':'Product published to customers.',true);await loadProducts()}}else if(del){const p=allProducts.find(x=>x.id===del);if(!confirm(`Permanently delete “${p.name}”? Hiding is safer if you may need it later.`))return;const {error}=await db.from('products').delete().eq('id',del);if(error)msg('Could not delete product: '+error.message);else{msg('Product deleted.',true);await loadProducts()}}});
+async function loadProducts(){const {data,error}=await db.from('products').select('*').order('display_order').order('name');if(error){msg('Unable to load products: '+error.message);return}allProducts=data||[];const {data:costs,error:costError}=await db.from('product_costs').select('*');if(costError){msg('Products loaded but private cost data could not be loaded: '+costError.message);return}const byId=Object.fromEntries((costs||[]).map(c=>[c.product_id,c.cost_per_selling_unit]));allProducts.forEach(p=>p.cost_per_selling_unit=Number(byId[p.id]||0));populateProductTypeFilter();renderRows()}function getFilteredProducts(){
+  const q=$('adminSearch').value.trim().toLowerCase();
+  const category=$('exportCategoryFilter').value;
+  const productType=$('exportProductTypeFilter').value;
+  return allProducts.filter(p=>{
+    const matchesSearch=!q || String(p.name||'').toLowerCase().includes(q) || String(p.description||'').toLowerCase().includes(q);
+    const matchesCategory=!category || p.category===category;
+    const matchesType=!productType || (p.product_type||'Other')===productType;
+    return matchesSearch && matchesCategory && matchesType;
+  });
+}
+function populateProductTypeFilter(){
+  const select=$('exportProductTypeFilter');
+  if(!select)return;
+  const current=select.value;
+  const types=[...new Set(allProducts.map(p=>String(p.product_type||'Other').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  select.innerHTML='<option value="">All product types</option>'+types.map(type=>`<option value="${esc(type)}">${esc(type)}</option>`).join('');
+  if(types.includes(current))select.value=current;
+}
+function renderRows(){const list=getFilteredProducts();$('productCount').textContent=`· ${allProducts.length} total · ${allProducts.filter(p=>p.is_published).length} published`;$('productRows').innerHTML=list.length?list.map(p=>`<tr><td>${p.image_url?`<img src="${esc(p.image_url)}" alt="">`:'—'}</td><td><strong>${esc(p.name)}</strong><span class="sub">${p.category==='standard'?'Standard':'Non-standard'} · ${esc(p.product_type||'Other')} · ${esc(p.selling_unit)}</span></td><td>${p.stock_quantity} ${p.selling_unit}(s)<span class="sub">Internal units: ${internal(p)}</span></td><td>${money(p.actual_price)}<span class="sub">${p.discount_percent}% off · sale ${money(salePrice(p))}</span><span class="sub">Cost ${money(p.cost_per_selling_unit)} · margin ${money(salePrice(p)-p.cost_per_selling_unit)}/unit</span></td><td><span class="status-pill ${p.is_published?'':'off'}">${p.is_published?'Published':'Hidden'}</span></td><td><div class="top-actions"><button class="btn secondary" data-edit="${p.id}">Edit</button><button class="btn secondary" data-toggle="${p.id}">${p.is_published?'Hide':'Publish'}</button><button class="btn danger" data-delete="${p.id}">Delete</button></div></td></tr>`).join(''):'<tr><td colspan="6">No products found. Add your first product above.</td></tr>'}$('adminSearch').addEventListener('input',renderRows);
+$('exportCategoryFilter').addEventListener('change',renderRows);
+$('exportProductTypeFilter').addEventListener('change',renderRows);
+$('resetProductFiltersBtn').addEventListener('click',()=>{
+  $('adminSearch').value='';
+  $('exportCategoryFilter').value='';
+  $('exportProductTypeFilter').value='';
+  renderRows();
+});
+function csvCell(value){
+  const text=String(value??'');
+  return '"' + text.replace(/"/g,'""') + '"';
+}
+function downloadFilteredProductsCsv(){
+  const products=getFilteredProducts();
+  if(!products.length){
+    msg('No products match the selected filters. Nothing was downloaded.');
+    return;
+  }
+  const headers=['Product Name','Description','Category','Product Type','Selling Unit','Boxes / stock quantity','Pieces per box','Actual price','Discount percentage','','Private cost per selling unit'];
+  const rows=products.map(p=>[
+    p.name,p.description||'',
+    p.category==='standard'?'Standard':p.category==='non_standard'?'Non-standard':(p.category||''),
+    p.product_type||'Other',p.selling_unit||'',p.stock_quantity??0,p.pieces_per_box??1,
+    p.actual_price??0,p.discount_percent??0,'',p.cost_per_selling_unit??0
+  ]);
+  const csv='\uFEFF'+[headers,...rows].map(row=>row.map(csvCell).join(',')).join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement('a');
+  const date=new Date().toISOString().slice(0,10);
+  const category=$('exportCategoryFilter').value;
+  const type=$('exportProductTypeFilter').value;
+  const safePart=value=>String(value||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  const suffix=[category==='standard'?'standard':category==='non_standard'?'non-standard':'all-categories',type?safePart(type):'all-types'].join('-');
+  link.href=url;
+  link.download=`raghuveera-products-${suffix}-${date}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  msg(`Downloaded ${products.length} matching product(s). The CSV can be opened in Excel. Keep the private-cost column confidential.`,true);
+}
+$('downloadFilteredProductsBtn').addEventListener('click',downloadFilteredProductsCsv);
+$('productRows').addEventListener('click',async e=>{const edit=e.target.closest('[data-edit]')?.dataset.edit,toggle=e.target.closest('[data-toggle]')?.dataset.toggle,del=e.target.closest('[data-delete]')?.dataset.delete;if(edit){const p=allProducts.find(x=>x.id===edit);if(!p)return;$('productId').value=p.id;for(const [id,key] of [['name','name'],['description','description'],['category','category'],['productType','product_type'],['sellingUnit','selling_unit'],['stockQuantity','stock_quantity'],['piecesPerBox','pieces_per_box'],['actualPrice','actual_price'],['discountPercent','discount_percent'],['displayOrder','display_order']])$(id).value=p[key]??'';$('costPrice').value=p.cost_per_selling_unit||0;$('published').value=String(p.is_published);$('formTitle').textContent='Edit product';$('saveBtn').textContent='Update product';if(p.image_url){$('imagePreview').src=p.image_url;$('imagePreview').style.display='block'}else $('imagePreview').style.display='none';if(p.video_url){$('videoPreview').src=p.video_url;$('videoPreview').style.display='block'}else $('videoPreview').style.display='none';$('imageFile').value='';$('videoFile').value='';updateCalc();$('editorPanel').scrollIntoView({behavior:'smooth',block:'start'})}else if(toggle){const p=allProducts.find(x=>x.id===toggle);const {error}=await db.from('products').update({is_published:!p.is_published}).eq('id',toggle);if(error)msg('Could not change visibility: '+error.message);else{msg(p.is_published?'Product hidden from customers.':'Product published to customers.',true);await loadProducts()}}else if(del){const p=allProducts.find(x=>x.id===del);if(!confirm(`Permanently delete “${p.name}”? Hiding is safer if you may need it later.`))return;const {error}=await db.from('products').delete().eq('id',del);if(error)msg('Could not delete product: '+error.message);else{msg('Product deleted.',true);await loadProducts()}}});
 async function loadOrders() {
   if (!db || !currentUser) return;
 
