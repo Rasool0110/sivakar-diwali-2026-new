@@ -473,6 +473,7 @@ const cfg=window.SIVAKAR_CONFIG||{};
 let db=null,products=[],filter='all',cart={};
 let standardTypeFilter='all',nonStandardTypeFilter='all';
 
+
 const productTypes=[
   'Sparklers',
   'Bijili Crackers',
@@ -484,13 +485,18 @@ const productTypes=[
   'Aerial Shots',
   'Walas / Garland Crackers',
   'Fancy Wheels & Spinners',
-  'Fancy & Novelty Crackers',
+  'Match Boxes',
   'Pencil & Twinkling Crackers',
   'Comets',
   'Smoke & Fog Items',
   'Gift Boxes',
-  'Other'
-];const $=id=>document.getElementById(id);const money=n=>'₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2});function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function configured(){return cfg.SUPABASE_URL&&cfg.SUPABASE_ANON_KEY&&!cfg.SUPABASE_URL.includes('PASTE_')&&!cfg.SUPABASE_ANON_KEY.includes('PASTE_')}function setStatus(msg,hide=false){$('status').textContent=msg;$('status').classList.toggle('hidden',hide)}function salePrice(p){return Math.round(Number(p.actual_price||0)*(1-Number(p.discount_percent||0)/100)*100)/100}function unitName(p){return ({box:'box',piece:'piece',packet:'packet',bag:'bag'})[p.selling_unit]||'unit'}function internalUnits(p){return Number(p.stock_quantity||0)*(p.selling_unit==='box'?Number(p.pieces_per_box||1):1)}function qty(p){return Number(cart[p.id]||0)}function lineTotal(p){return salePrice(p)*qty(p)}function stockLabel(p){return Number(p.stock_quantity)>0?`${p.stock_quantity} ${unitName(p)}(s) available`:'Currently out of stock'}
+  'Other and Fancy'
+];
+const productTypeMap = {
+  'Match Boxes': 'Fancy & Novelty Crackers',
+  'Other and Fancy': 'Other'
+};
+const $=id=>document.getElementById(id);const money=n=>'₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2});function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function configured(){return cfg.SUPABASE_URL&&cfg.SUPABASE_ANON_KEY&&!cfg.SUPABASE_URL.includes('PASTE_')&&!cfg.SUPABASE_ANON_KEY.includes('PASTE_')}function setStatus(msg,hide=false){$('status').textContent=msg;$('status').classList.toggle('hidden',hide)}function salePrice(p){return Math.round(Number(p.actual_price||0)*(1-Number(p.discount_percent||0)/100)*100)/100}function unitName(p){return ({box:'box',piece:'piece',packet:'packet',bag:'bag'})[p.selling_unit]||'unit'}function internalUnits(p){return Number(p.stock_quantity||0)*(p.selling_unit==='box'?Number(p.pieces_per_box||1):1)}function qty(p){return Number(cart[p.id]||0)}function lineTotal(p){return salePrice(p)*qty(p)}function stockLabel(p){return Number(p.stock_quantity)>0?`${p.stock_quantity} ${unitName(p)}(s) available`:'Currently out of stock'}
 function card(p){const d=Number(p.discount_percent||0),actual=Number(p.actual_price||0),sale=salePrice(p),n=qty(p),stock=Number(p.stock_quantity||0),label=unitName(p);const media=p.image_url?`<img loading="lazy" src="${esc(p.image_url)}" alt="${esc(p.name)}">`:'<div class="fallback">✦</div>';return `<article class="product">
 <div class="media">
   ${media}
@@ -539,17 +545,22 @@ function render() {
   );
 
   // Apply the separate product-type filters
-  const std = list.filter(p =>
-    p.category === 'standard' &&
-    (standardTypeFilter === 'all' ||
-      (p.product_type || 'Other') === standardTypeFilter)
-  );
+  
+const std = list.filter(p =>
+  p.category === 'standard' &&
+  (standardTypeFilter === 'all' ||
+    (p.product_type || 'Other') ===
+      (productTypeMap[standardTypeFilter] || standardTypeFilter))
+);
 
-  const non = list.filter(p =>
-    p.category === 'non_standard' &&
-    (nonStandardTypeFilter === 'all' ||
-      (p.product_type || 'Other') === nonStandardTypeFilter)
-  );
+  
+const non = list.filter(p =>
+  p.category === 'non_standard' &&
+  (nonStandardTypeFilter === 'all' ||
+    (p.product_type || 'Other') ===
+      (productTypeMap[nonStandardTypeFilter] || nonStandardTypeFilter))
+);
+
 
   // Render standard products
   $('standardGrid').innerHTML = std.length
