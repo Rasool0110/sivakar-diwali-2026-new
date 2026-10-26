@@ -5,6 +5,6 @@
 window.SIVAKAR_CONFIG = {
   SUPABASE_URL: 'https://yagpqskjqwrralkefqqn.supabase.co',
   SUPABASE_ANON_KEY: 'sb_publishable_0jP4QO6MxmLIyr51Cqu8Wg_Ct4X7w8n',
-  SHOP_WHATSAPP_NUMBER: '918885909297',
+  SHOP_WHATSAPP_NUMBER: '919618290697',
   SHOP_NAME: 'Sivakar'
 };
