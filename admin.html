@@ -647,12 +647,18 @@ let offlineItems = [];
 let offlineFinalPriceTouched = false;
   
 
+
 function addOfflineProduct(productId, quantity = 1) {
   const product = allProducts.find(
     p => String(p.id) === String(productId)
   );
 
-  if (!product) return;
+  if (!product) return false;
+
+  if (!Number.isInteger(quantity) || quantity < 1) {
+    alert('Enter a valid quantity.');
+    return false;
+  }
 
   const existing = offlineItems.find(
     item => String(item.productId) === String(productId)
@@ -662,7 +668,7 @@ function addOfflineProduct(productId, quantity = 1) {
 
   if (currentQty + quantity > Number(product.stock_quantity)) {
     alert(`Only ${product.stock_quantity} units available.`);
-    return;
+    return false;
   }
 
   if (existing) {
@@ -676,7 +682,7 @@ function addOfflineProduct(productId, quantity = 1) {
 
   updateOfflineTotals();
 
-  document.getElementById('posQuantity').value = 1;
+  return true;
 }
 
 
@@ -789,7 +795,17 @@ function renderOfflineProducts() {
   }
 }
 
+
 let selectedOfflineProductId = null;
+
+function clearOfflineProductSelection() {
+  selectedOfflineProductId = null;
+
+  document.getElementById('posSelectedProductName').textContent =
+    'No product selected';
+
+  document.getElementById('posQuantity').value = 1;
+}
 
 document.getElementById('posProductGrid')
   ?.addEventListener('click', e => {
@@ -827,17 +843,51 @@ document.getElementById('posAddToBill')
       return;
     }
 
+    const productId = selectedOfflineProductId;
+
+    const added = addOfflineProduct(productId, quantity);
+
+    if (added) {
+      clearOfflineProductSelection();
+    }
+  });
+
+
+    const quantity = Number(
+      document.getElementById('posQuantity').value
+    );
+
+    if (!Number.isInteger(quantity) || quantity < 1) {
+      alert('Please enter a valid quantity.');
+      return;
+    }
+
     addOfflineProduct(selectedOfflineProductId, quantity);
   });
 
+
 function updateOfflineTotals() {
   const total = offlineItems.reduce((sum, item) => {
-    const p = allProducts.find(x => x.id === item.productId);
-    return sum + (p ? salePrice(p) * item.quantity : 0);
+    const p = allProducts.find(
+      x => String(x.id) === String(item.productId)
+    );
+
+    return sum + (p ? salePrice(p) * Number(item.quantity) : 0);
   }, 0);
 
-  $('offlineCatalogTotal').value = total.toFixed(2);
+  // Update the new POS catalogue total
+  const catalogueTotal = document.getElementById('posCatalogueTotal');
 
+  if (catalogueTotal) {
+    catalogueTotal.textContent = money(total);
+  }
+
+  // Keep the existing billing field updated
+  if ($('offlineCatalogTotal')) {
+    $('offlineCatalogTotal').value = total.toFixed(2);
+  }
+
+  // Automatically update negotiated price until manually changed
   if (!offlineFinalPriceTouched) {
     $('offlineFinalPrice').value = total.toFixed(2);
   }
@@ -848,23 +898,45 @@ function updateOfflineTotals() {
   $('offlineBalanceDue').textContent =
     Math.max(0, finalPrice - received).toFixed(2);
 
-  $('offlineItemRows').innerHTML = offlineItems.length
-    ? offlineItems.map(item => {
-        const p = allProducts.find(x => x.id === item.productId);
-        if (!p) return '';
+  // Render cart items in the new POS cart
+  const cart = document.getElementById('posCartItems');
 
-        const lineTotal = salePrice(p) * item.quantity;
+  if (cart) {
+    cart.innerHTML = offlineItems.length
+      ? offlineItems.map(item => {
+          const p = allProducts.find(
+            x => String(x.id) === String(item.productId)
+          );
 
-        return `<tr>
-          <td>${esc(p.name)}<span class="sub">${esc(p.selling_unit)}</span></td>
-          <td>${item.quantity}</td>
-          <td>${money(salePrice(p))}</td>
-          <td>${money(lineTotal)}</td>
-          <td><button type="button" class="btn danger"
-            data-remove-offline-item="${p.id}">Remove</button></td>
-        </tr>`;
-      }).join('')
-    : '<tr><td colspan="5">No products added yet.</td></tr>';
+          if (!p) return '';
+
+          const quantity = Number(item.quantity);
+          const unitPrice = salePrice(p);
+          const lineTotal = unitPrice * quantity;
+
+          return `
+            <div class="pos-cart-item">
+              <div>
+                <strong>${escapeHtml(p.name)}</strong>
+                <p>${escapeHtml(p.selling_unit || '')}</p>
+                <small>
+                  ${quantity} × ${money(unitPrice)}
+                </small>
+                <div><strong>${money(lineTotal)}</strong></div>
+              </div>
+
+              <button
+                type="button"
+                class="btn danger"
+                data-remove-offline-item="${p.id}"
+              >
+                Remove
+              </button>
+            </div>
+          `;
+        }).join('')
+      : '<p>No products added yet.</p>';
+  }
 }
 
 function resetOfflineSale() {
@@ -897,51 +969,20 @@ document.getElementById('posTypeFilter')
   ?.addEventListener('change', renderOfflineProducts);
 
 
-$('addOfflineItem').addEventListener('click', () => {
-  const productId = $('offlineProductSelect').value;
-  const quantity = Number($('offlineProductQuantity').value);
-  const p = allProducts.find(x => x.id === productId);
 
-  if (!p) {
-    msg('Please select a product.');
-    return;
-  }
 
-  if (!Number.isInteger(quantity) || quantity < 1) {
-    msg('Enter a valid quantity.');
-    return;
-  }
+document.getElementById('posCartItems')
+  ?.addEventListener('click', e => {
+    const button = e.target.closest('[data-remove-offline-item]');
+    if (!button) return;
 
-  const existing = offlineItems.find(x => x.productId === productId);
-  const combinedQuantity = quantity + (existing?.quantity || 0);
+    offlineItems = offlineItems.filter(
+      item => String(item.productId) !==
+        String(button.dataset.removeOfflineItem)
+    );
 
-  if (combinedQuantity > Number(p.stock_quantity)) {
-    msg(`Only ${p.stock_quantity} ${p.selling_unit}(s) available for ${p.name}.`);
-    return;
-  }
-
-  if (existing) {
-    existing.quantity = combinedQuantity;
-  } else {
-    offlineItems.push({ productId, quantity });
-  }
-
-  $('offlineProductSelect').value = '';
-  $('offlineProductQuantity').value = '1';
-  updateOfflineTotals();
-  console.log('Offline items:', JSON.stringify(offlineItems));
-});
-
-$('offlineItemRows').addEventListener('click', e => {
-  const button = e.target.closest('[data-remove-offline-item]');
-  if (!button) return;
-
-  offlineItems = offlineItems.filter(
-    item => item.productId !== button.dataset.removeOfflineItem
-  );
-
-  updateOfflineTotals();
-});
+    updateOfflineTotals();
+  });
 
 $('offlineFinalPrice').addEventListener('input', () => {
   offlineFinalPriceTouched = true;
