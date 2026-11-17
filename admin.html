@@ -1,5 +1,114 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Raghuveera | Shop Admin</title><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"><style>
 :root{--ink:#261910;--muted:#76685c;--paper:#fffdf8;--bg:#f7f1e7;--line:#e5d8c5;--red:#a72b22;--green:#286c45}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px 'DM Sans',sans-serif}header{background:#2b1b13;color:#fff4df;padding:22px clamp(16px,4vw,48px);display:flex;align-items:center;justify-content:space-between;gap:15px}header h1{margin:0;font-size:21px}header a{color:#ffd080}.wrap{max-width:1200px;margin:28px auto;padding:0 16px}.panel{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:22px;margin-bottom:18px}.panel h2{margin:0 0 16px;font-size:19px}.muted,.note{color:var(--muted);line-height:1.6}.grid-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.field{display:flex;flex-direction:column;gap:7px}.field.wide{grid-column:span 2}.field.full{grid-column:1/-1}label{font-size:12px;font-weight:700;color:#5d4a3c}input,select,textarea{width:100%;border:1px solid #d9cbb8;border-radius:9px;padding:11px 12px;background:white;color:var(--ink);font:inherit;min-width:0}textarea{min-height:76px;resize:vertical}.help{font-size:11px;color:var(--muted);line-height:1.4}.btn{border:0;border-radius:9px;padding:11px 15px;font:inherit;font-weight:700;cursor:pointer;background:var(--red);color:white}.btn.secondary{background:#eee3d2;color:var(--ink)}.btn.danger{background:#f8e4df;color:#9b251c}.btn:disabled{opacity:.55;cursor:wait}.actions,.top-actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:14px}.message{padding:12px 14px;border-radius:9px;margin-bottom:15px;background:#fff0d7;color:#704a15;line-height:1.5}.message.ok{background:#e5f4e9;color:#1e633a}.hidden{display:none!important}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:780px}th,td{text-align:left;padding:12px;border-bottom:1px solid var(--line);vertical-align:middle}th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}td img{width:48px;height:42px;object-fit:cover;border-radius:7px;background:#eee}td .sub{display:block;color:var(--muted);font-size:11px;margin-top:4px}.status-pill{display:inline-block;padding:5px 7px;border-radius:6px;background:#e5f4e9;color:var(--green);font-size:11px}.status-pill.off{background:#eee3d2;color:#806c59}.preview{max-width:130px;max-height:100px;border-radius:8px;display:none;margin-top:7px}.note{font-size:12px}.calc{background:#f5ead9;border-radius:10px;padding:12px;margin-top:12px;font-size:12px;line-height:1.6}@media(max-width:760px){.grid-form{grid-template-columns:repeat(2,minmax(0,1fr))}.field.wide{grid-column:span 2}.panel{padding:16px}}@media(max-width:460px){.grid-form{grid-template-columns:1fr}.field.wide,.field.full{grid-column:1}.panel{padding:13px}header{align-items:flex-start;flex-direction:column}}
+
+/* POS billing layout */
+.pos-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(300px, 1fr);
+  gap: 20px;
+  align-items: start;
+  margin-top: 20px;
+}
+
+.pos-catalogue,
+.pos-cart {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  min-width: 0;
+}
+
+.pos-toolbar {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.pos-toolbar input,
+.pos-toolbar select {
+  width: 100%;
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+}
+
+.pos-product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+  gap: 12px;
+}
+
+.pos-product-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  background: white;
+}
+
+.pos-product-card img {
+  width: 100%;
+  height: 115px;
+  object-fit: contain;
+  background: #f8fafc;
+}
+
+.pos-product-info {
+  padding: 10px;
+}
+
+.pos-product-info h4 {
+  font-size: 14px;
+  margin: 0 0 6px;
+}
+
+.pos-product-info p {
+  font-size: 12px;
+  margin: 4px 0;
+  color: #64748b;
+}
+
+.pos-product-info button {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.pos-cart {
+  position: sticky;
+  top: 15px;
+}
+
+.pos-cart-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.pos-cart-total {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 16px;
+  font-size: 17px;
+  font-weight: bold;
+}
+
+@media (max-width: 800px) {
+  .pos-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .pos-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .pos-cart {
+    position: static;
+  }
+}
 </style></head><body><header><div><h1>Raghuveera · Shop Admin</h1><div style="font-size:12px;opacity:.75;margin-top:5px">Manage products, stock and prices</div></div><div class="top-actions"><a href="index.html">View customer shop ↗</a><button id="signOut" class="btn secondary hidden">Sign out</button></div></header><div class="wrap"><div id="message" class="message">Connect your new Supabase project and follow README.md.</div><section id="loginPanel" class="panel"><h2>Admin sign in</h2><p class="muted">Only an account explicitly added to the Sivakar admin list can manage the catalogue.</p><form id="loginForm"><div class="grid-form"><div class="field"><label for="email">Admin email</label><input id="email" type="email" required autocomplete="username"></div><div class="field"><label for="password">Password</label><input id="password" type="password" required autocomplete="current-password"></div></div><div class="actions"><button class="btn" type="submit">Sign in</button></div></form></section>
 <section id="editorPanel" class="panel hidden"><h2 id="formTitle">Add a product</h2><form id="productForm"><input id="productId" type="hidden"><div class="grid-form"><div class="field wide"><label for="name">Product name *</label><input id="name" required maxlength="160" placeholder="e.g. 100 Wala"></div><div class="field">
   <label for="category">Category *</label>
@@ -142,9 +251,44 @@
     <h3>Add products</h3>
     <div class="form-grid">
       <label>Product
-        <select id="offlineProductSelect" required>
-          <option value="">Select a product</option>
-        </select>
+        <div class="pos-layout">
+
+  <!-- Product catalogue -->
+  <section class="pos-catalogue">
+    <div class="pos-toolbar">
+      <input
+        type="search"
+        id="posSearch"
+        placeholder="Search products..."
+      />
+
+      <select id="posCategoryFilter">
+        <option value="all">All categories</option>
+        <option value="standard">Standard</option>
+        <option value="non_standard">Non-standard</option>
+      </select>
+
+      <select id="posTypeFilter">
+        <option value="all">All product types</option>
+      </select>
+    </div>
+
+    <div id="posProductGrid" class="pos-product-grid"></div>
+  </section>
+
+  <!-- Cart -->
+  <section class="pos-cart">
+    <h3>Current Bill</h3>
+
+    <div id="posCartItems"></div>
+
+    <div class="pos-cart-total">
+      <span>Catalogue Total</span>
+      <strong id="posCatalogueTotal">₹0.00</strong>
+    </div>
+  </section>
+
+</div>
       </label>
 
       <label>Quantity
@@ -480,20 +624,133 @@ $('orderRows').addEventListener('click', async e => {
 /* Offline sales: catalogue, totals and order creation */
 let offlineItems = [];
 let offlineFinalPriceTouched = false;
-
-function renderOfflineProducts() {
-  const select = $('offlineProductSelect');
-  if (!select) return;
-
-  const available = allProducts.filter(
-    p => p.is_published && Number(p.stock_quantity) > 0
+  
+function addOfflineProduct(productId) {
+  const product = allProducts.find(
+    p => String(p.id) === String(productId)
   );
 
-  select.innerHTML =
-    '<option value="">Select a product</option>' +
-    available.map(p =>
-      `<option value="${p.id}">${esc(p.name)} — ${esc(p.selling_unit)} — ${money(salePrice(p))} — Stock: ${p.stock_quantity}</option>`
-    ).join('');
+  if (!product) return;
+
+  const existing = offlineItems.find(
+    item => String(item.product_id) === String(productId)
+  );
+
+  const currentQty = existing ? Number(existing.quantity) : 0;
+
+  if (currentQty + 1 > Number(product.stock_quantity)) {
+    alert("Not enough stock available.");
+    return;
+  }
+
+  if (existing) {
+    existing.quantity += 1;
+  } else {
+    offlineItems.push({
+      product_id: product.id,
+      name: product.name,
+      selling_unit: product.selling_unit,
+      quantity: 1,
+      unit_price: salePrice(product)
+    });
+  }
+
+  updateOfflineTotals();
+}
+
+
+
+function renderOfflineProducts() {
+  const grid = document.getElementById("posProductGrid");
+  const typeFilter = document.getElementById("posTypeFilter");
+
+  if (!grid || !typeFilter) return;
+
+  // Include published and hidden products.
+  // Website visibility does not control counter billing.
+  const availableProducts = allProducts.filter(
+    p => Number(p.stock_quantity) > 0
+  );
+
+  const currentType = typeFilter.value || "all";
+
+  const productTypes = [...new Set(
+    availableProducts
+      .map(p => p.product_type)
+      .filter(Boolean)
+  )].sort();
+
+  typeFilter.innerHTML =
+    '<option value="all">All product types</option>' +
+    productTypes.map(type =>
+      `<option value="${escapeHtml(type)}">${escapeHtml(type)}</option>`
+    ).join("");
+
+  typeFilter.value = productTypes.includes(currentType)
+    ? currentType
+    : "all";
+
+  const search = (
+    document.getElementById("posSearch")?.value || ""
+  ).trim().toLowerCase();
+
+  const category =
+    document.getElementById("posCategoryFilter")?.value || "all";
+
+  const selectedType = typeFilter.value;
+
+  const filtered = availableProducts.filter(p => {
+    const matchesSearch = (p.name || "")
+      .toLowerCase()
+      .includes(search);
+
+    const matchesCategory =
+      category === "all" || p.category === category;
+
+    const matchesType =
+      selectedType === "all" || p.product_type === selectedType;
+
+    return matchesSearch && matchesCategory && matchesType;
+  });
+
+  grid.innerHTML = filtered.map(p => {
+    const price = salePrice(p);
+
+    const image = p.image_url
+      ? escapeHtml(p.image_url)
+      : "";
+
+    return `
+      <div class="pos-product-card">
+        <img
+          src="${image || "images/placeholder.png"}"
+          alt="${escapeHtml(p.name)}"
+          onerror="this.style.display='none'"
+        />
+
+        <div class="pos-product-info">
+          <h4>${escapeHtml(p.name)}</h4>
+
+          <p>${escapeHtml(p.selling_unit || "")}</p>
+
+          <p>Stock: ${Number(p.stock_quantity)}</p>
+
+          <strong>₹${Number(price).toFixed(2)}</strong>
+
+          <button
+            type="button"
+            onclick="addOfflineProduct('${p.id}')"
+          >
+            Add to bill
+          </button>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  if (!filtered.length) {
+    grid.innerHTML = "<p>No matching in-stock products found.</p>";
+  }
 }
 
 function updateOfflineTotals() {
@@ -551,6 +808,17 @@ $('showOfflineSale').addEventListener('click', () => {
     block: 'start'
   });
 });
+  
+// POS search and filter listeners
+document.getElementById('posSearch')
+  ?.addEventListener('input', renderOfflineProducts);
+
+document.getElementById('posCategoryFilter')
+  ?.addEventListener('change', renderOfflineProducts);
+
+document.getElementById('posTypeFilter')
+  ?.addEventListener('change', renderOfflineProducts);
+
 
 $('addOfflineItem').addEventListener('click', () => {
   const productId = $('offlineProductSelect').value;
