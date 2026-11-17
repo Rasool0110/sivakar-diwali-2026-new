@@ -834,24 +834,7 @@ document.getElementById('posAddToBill')
       return;
     }
 
-    const quantity = Number(
-      document.getElementById('posQuantity').value
-    );
-
-    if (!Number.isInteger(quantity) || quantity < 1) {
-      alert('Please enter a valid quantity.');
-      return;
-    }
-
-    const productId = selectedOfflineProductId;
-
-    const added = addOfflineProduct(productId, quantity);
-
-    if (added) {
-      clearOfflineProductSelection();
-    }
-  });
-
+    
 
     const quantity = Number(
       document.getElementById('posQuantity').value
