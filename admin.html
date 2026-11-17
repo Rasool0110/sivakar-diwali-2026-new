@@ -660,6 +660,20 @@ function addOfflineProduct(productId) {
 
 
 
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => {
+    const entities = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    };
+
+    return entities[char];
+  });
+}
+
 function renderOfflineProducts() {
   const grid = document.getElementById("posProductGrid");
   const typeFilter = document.getElementById("posTypeFilter");
