@@ -274,6 +274,27 @@
     </div>
 
     <div id="posProductGrid" class="pos-product-grid"></div>
+    <div class="pos-selection">
+  <h3>Selected Product</h3>
+
+  <p id="posSelectedProductName">
+    No product selected
+  </p>
+
+  <label for="posQuantity">Quantity</label>
+
+  <input
+    type="number"
+    id="posQuantity"
+    min="1"
+    step="1"
+    value="1"
+  />
+
+  <button type="button" id="posAddToBill">
+    Add to bill
+  </button>
+</div>
   </section>
 
   <!-- Cart -->
@@ -625,7 +646,8 @@ $('orderRows').addEventListener('click', async e => {
 let offlineItems = [];
 let offlineFinalPriceTouched = false;
   
-function addOfflineProduct(productId) {
+
+function addOfflineProduct(productId, quantity = 1) {
   const product = allProducts.find(
     p => String(p.id) === String(productId)
   );
@@ -633,29 +655,28 @@ function addOfflineProduct(productId) {
   if (!product) return;
 
   const existing = offlineItems.find(
-    item => String(item.product_id) === String(productId)
+    item => String(item.productId) === String(productId)
   );
 
   const currentQty = existing ? Number(existing.quantity) : 0;
 
-  if (currentQty + 1 > Number(product.stock_quantity)) {
-    alert("Not enough stock available.");
+  if (currentQty + quantity > Number(product.stock_quantity)) {
+    alert(`Only ${product.stock_quantity} units available.`);
     return;
   }
 
   if (existing) {
-    existing.quantity += 1;
+    existing.quantity += quantity;
   } else {
     offlineItems.push({
-      product_id: product.id,
-      name: product.name,
-      selling_unit: product.selling_unit,
-      quantity: 1,
-      unit_price: salePrice(product)
+      productId: product.id,
+      quantity: quantity
     });
   }
 
   updateOfflineTotals();
+
+  document.getElementById('posQuantity').value = 1;
 }
 
 
@@ -749,14 +770,15 @@ function renderOfflineProducts() {
 
           <p>Stock: ${Number(p.stock_quantity)}</p>
 
-          <strong>₹${Number(price).toFixed(2)}</strong>
+         <strong>₹${Number(price).toFixed(2)}</strong>
 
-          <button
-            type="button"
-            onclick="addOfflineProduct('${p.id}')"
-          >
-            Add to bill
-          </button>
+<button
+  type="button"
+  class="pos-select-product"
+  data-product-id="${p.id}"
+>
+  Select product
+</button>
         </div>
       </div>
     `;
@@ -766,6 +788,47 @@ function renderOfflineProducts() {
     grid.innerHTML = "<p>No matching in-stock products found.</p>";
   }
 }
+
+let selectedOfflineProductId = null;
+
+document.getElementById('posProductGrid')
+  ?.addEventListener('click', e => {
+    const button = e.target.closest('.pos-select-product');
+    if (!button) return;
+
+    selectedOfflineProductId = button.dataset.productId;
+
+    const product = allProducts.find(
+      p => String(p.id) === String(selectedOfflineProductId)
+    );
+
+    if (!product) return;
+
+    document.getElementById('posSelectedProductName').textContent =
+      product.name;
+
+    document.getElementById('posQuantity').value = 1;
+  });
+
+document.getElementById('posAddToBill')
+  ?.addEventListener('click', () => {
+
+    if (!selectedOfflineProductId) {
+      alert('Please select a product first.');
+      return;
+    }
+
+    const quantity = Number(
+      document.getElementById('posQuantity').value
+    );
+
+    if (!Number.isInteger(quantity) || quantity < 1) {
+      alert('Please enter a valid quantity.');
+      return;
+    }
+
+    addOfflineProduct(selectedOfflineProductId, quantity);
+  });
 
 function updateOfflineTotals() {
   const total = offlineItems.reduce((sum, item) => {
