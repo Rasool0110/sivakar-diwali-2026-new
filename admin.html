@@ -70,9 +70,45 @@
   color: #64748b;
 }
 
-.pos-product-info button {
-  width: 100%;
+.pos-product-grid {
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+}
+
+.pos-product-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.pos-product-info strong {
+  font-size: 16px;
+  color: var(--red);
+}
+
+.pos-product-actions {
+  display: grid;
+  grid-template-columns: minmax(70px, 0.8fr) minmax(0, 1.4fr);
+  gap: 8px;
+  align-items: end;
   margin-top: 8px;
+}
+
+.pos-product-actions label {
+  display: block;
+  font-size: 11px;
+}
+
+.pos-product-actions input {
+  padding: 9px 8px;
+  margin-top: 5px;
+}
+
+.pos-product-actions .btn {
+  width: 100%;
+  min-height: 39px;
+  padding: 9px 8px;
+  margin: 0;
+  font-size: 12px;
 }
 
 .pos-cart {
@@ -249,69 +285,41 @@
     <hr>
 
     <h3>Add products</h3>
-    <div class="form-grid">
-      <label>Product
-        <div class="pos-layout">
+    <div class="pos-layout">
+      <!-- Product catalogue -->
+      <section class="pos-catalogue">
+        <div class="pos-toolbar">
+          <input
+            type="search"
+            id="posSearch"
+            placeholder="Search products..."
+            aria-label="Search products"
+          />
 
-  <!-- Product catalogue -->
-  <section class="pos-catalogue">
-    <div class="pos-toolbar">
-      <input
-        type="search"
-        id="posSearch"
-        placeholder="Search products..."
-      />
+          <select id="posCategoryFilter" aria-label="Filter by category">
+            <option value="all">All categories</option>
+            <option value="standard">Standard</option>
+            <option value="non_standard">Non-standard</option>
+          </select>
 
-      <select id="posCategoryFilter">
-        <option value="all">All categories</option>
-        <option value="standard">Standard</option>
-        <option value="non_standard">Non-standard</option>
-      </select>
+          <select id="posTypeFilter" aria-label="Filter by product type">
+            <option value="all">All product types</option>
+          </select>
+        </div>
 
-      <select id="posTypeFilter">
-        <option value="all">All product types</option>
-      </select>
+        <div id="posProductGrid" class="pos-product-grid"></div>
+      </section>
+
+      <!-- Current bill -->
+      <section class="pos-cart">
+        <h3>Current Bill</h3>
+        <div id="posCartItems"></div>
+        <div class="pos-cart-total">
+          <span>Catalogue Total</span>
+          <strong id="posCatalogueTotal">₹0.00</strong>
+        </div>
+      </section>
     </div>
-
-    <div id="posProductGrid" class="pos-product-grid"></div>
-    <div class="pos-selection">
-  <h3>Selected Product</h3>
-
-  <p id="posSelectedProductName">
-    No product selected
-  </p>
-
-  <label for="posQuantity">Quantity</label>
-
-  <input
-    type="number"
-    id="posQuantity"
-    min="1"
-    step="1"
-    value="1"
-  />
-
-  <button type="button" id="posAddToBill">
-    Add to bill
-  </button>
-</div>
-  </section>
-
-  <!-- Cart -->
-  <section class="pos-cart">
-    <h3>Current Bill</h3>
-
-    <div id="posCartItems"></div>
-
-    <div class="pos-cart-total">
-      <span>Catalogue Total</span>
-      <strong id="posCatalogueTotal">₹0.00</strong>
-    </div>
-  </section>
-
-</div>
-      </label>
-    <div class="form-grid">
       <label>Catalogue total (₹)
         <input id="offlineCatalogTotal" type="number" readonly value="0">
       </label>
@@ -680,14 +688,12 @@ function renderOfflineProducts() {
 
   if (!grid || !typeFilter) return;
 
-  // Include published and hidden products.
-  // Website visibility does not control counter billing.
+  // Include published and hidden products for counter billing.
   const availableProducts = allProducts.filter(
     p => Number(p.stock_quantity) > 0
   );
 
   const currentType = typeFilter.value || "all";
-
   const productTypes = [...new Set(
     availableProducts
       .map(p => p.product_type)
@@ -714,9 +720,9 @@ function renderOfflineProducts() {
   const selectedType = typeFilter.value;
 
   const filtered = availableProducts.filter(p => {
-    const matchesSearch = (p.name || "")
-      .toLowerCase()
-      .includes(search);
+    const matchesSearch =
+      (p.name || "").toLowerCase().includes(search) ||
+      (p.description || "").toLowerCase().includes(search);
 
     const matchesCategory =
       category === "all" || p.category === category;
@@ -729,13 +735,10 @@ function renderOfflineProducts() {
 
   grid.innerHTML = filtered.map(p => {
     const price = salePrice(p);
-
-    const image = p.image_url
-      ? escapeHtml(p.image_url)
-      : "";
+    const image = p.image_url ? escapeHtml(p.image_url) : "";
 
     return `
-      <div class="pos-product-card">
+      <article class="pos-product-card">
         <img
           src="${image || "images/placeholder.png"}"
           alt="${escapeHtml(p.name)}"
@@ -744,22 +747,36 @@ function renderOfflineProducts() {
 
         <div class="pos-product-info">
           <h4>${escapeHtml(p.name)}</h4>
+          <p>${escapeHtml(p.product_type || "Other")} · ${escapeHtml(p.selling_unit || "")}</p>
+          ${p.description ? `<p>${escapeHtml(p.description)}</p>` : ""}
+          <p>Available stock: ${Number(p.stock_quantity)}</p>
+          <strong>${money(price)} / ${escapeHtml(p.selling_unit || "unit")}</strong>
 
-          <p>${escapeHtml(p.selling_unit || "")}</p>
-
-          <p>Stock: ${Number(p.stock_quantity)}</p>
-
-         <strong>₹${Number(price).toFixed(2)}</strong>
-
-<button
-  type="button"
-  class="pos-select-product"
-  data-product-id="${p.id}"
->
-  Select product
-</button>
+          <div class="pos-product-actions">
+            <div>
+              <label for="posQty-${escapeHtml(p.id)}">Quantity</label>
+              <input
+                id="posQty-${escapeHtml(p.id)}"
+                class="pos-card-quantity"
+                type="number"
+                min="1"
+                max="${Number(p.stock_quantity)}"
+                step="1"
+                value="1"
+                inputmode="numeric"
+                data-quantity-product-id="${escapeHtml(p.id)}"
+              />
+            </div>
+            <button
+              type="button"
+              class="btn pos-add-product"
+              data-add-product-id="${escapeHtml(p.id)}"
+            >
+              Add to Bill
+            </button>
+          </div>
         </div>
-      </div>
+      </article>
     `;
   }).join("");
 
@@ -768,57 +785,29 @@ function renderOfflineProducts() {
   }
 }
 
-
-let selectedOfflineProductId = null;
-
-function clearOfflineProductSelection() {
-  selectedOfflineProductId = null;
-
-  document.getElementById('posSelectedProductName').textContent =
-    'No product selected';
-
-  document.getElementById('posQuantity').value = 1;
-}
-
-document.getElementById('posProductGrid')
-  ?.addEventListener('click', e => {
-    const button = e.target.closest('.pos-select-product');
+// Each product card owns its quantity field and Add to Bill button.
+document.getElementById("posProductGrid")
+  ?.addEventListener("click", e => {
+    const button = e.target.closest("[data-add-product-id]");
     if (!button) return;
 
-    selectedOfflineProductId = button.dataset.productId;
-
-    const product = allProducts.find(
-      p => String(p.id) === String(selectedOfflineProductId)
+    const productId = button.dataset.addProductId;
+    const quantityInput = document.querySelector(
+      `[data-quantity-product-id="${CSS.escape(productId)}"]`
     );
 
-    if (!product) return;
-
-    document.getElementById('posSelectedProductName').textContent =
-      product.name;
-
-    document.getElementById('posQuantity').value = 1;
-  });
-
-document.getElementById('posAddToBill')
-  ?.addEventListener('click', () => {
-
-    if (!selectedOfflineProductId) {
-      alert('Please select a product first.');
-      return;
-    }
-
-    
-
-    const quantity = Number(
-      document.getElementById('posQuantity').value
-    );
+    const quantity = Number(quantityInput?.value);
 
     if (!Number.isInteger(quantity) || quantity < 1) {
-      alert('Please enter a valid quantity.');
+      alert("Please enter a valid quantity.");
+      quantityInput?.focus();
       return;
     }
 
-    addOfflineProduct(selectedOfflineProductId, quantity);
+    if (addOfflineProduct(productId, quantity)) {
+      // Keep the user in the catalogue and reset only this card's quantity.
+      quantityInput.value = 1;
+    }
   });
 
 
